@@ -61,6 +61,9 @@ setup(
         'Twisted',
         'setuptools',
         ],
+    extras_require=dict(
+        mongo=['pymongo']
+    ),
     entry_points={
         'console_scripts': ['appserver = twistedae.appserver:main'],
         'paste.app_factory': ['main = twistedae.appserver:app_factory'],
