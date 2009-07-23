@@ -91,7 +91,7 @@ def applyConfigToWSGIResource(conf, resource):
             resource.putChild(static_dir, twisted.web.static.File(static_dir))
         elif script != None:
             base, ext = os.path.splitext(os.path.basename(script))
-            resource.putChild('', getWSGIResource(base))
+            resource.putChild(handler.url[1:], getWSGIResource(base))
 
 
 def setupDatastore(app_id, datastore, history, require_indexes, trusted):
