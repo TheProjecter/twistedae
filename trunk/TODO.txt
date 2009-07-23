@@ -1,0 +1,29 @@
+TODO
+====
+
+These are the TODOs ordered by priority in each group:
+
+Features
+--------
+
+ - Integrte datastore backend.
+ - Better command line frontend for appserver script.
+
+
+Refactoring
+-----------
+
+ - Less redundant code in appserver.py and service.py.
+
+
+Unit tests
+----------
+
+ - The goal is 100% coverage.
+
+
+Documentation
+-------------
+
+ - Inline documentation.
+ - Discuss whether we use sphinx (http://sphinx.pocoo.org).
