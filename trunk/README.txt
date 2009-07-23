@@ -8,7 +8,7 @@ Twisted framework. Concurrent request handling is just one of the benefits.
 
 At this point the project is a proof of concept. It basically replaces the
 SDK's BaseHTTPServer with twisted.web and includes 10gen's datastore stub for
-MongoDB. With thwistedae it is totally unnecessary to patch the Google App
+MongoDB. With twistedae it is totally unnecessary to patch the Google App
 Engine SDK.
 
 
