@@ -26,7 +26,7 @@ Run the application server::
 
 Alternatively you can use twistd to start the service::
 
-  $ twistd -ny src/twistedae/service.py
+  $ ./bin/twistd -ny src/twistedae/service.py
 
 Then access the application using a web browser with the following URL::
 
