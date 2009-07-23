@@ -6,20 +6,15 @@ These are the TODOs ordered by priority in each group:
 Features
 --------
 
- - Integrte datastore backend.
+ - Alternative implementations of mail, memcache and taskqueue services.
  - Better command line frontend for appserver script.
 
 
-Refactoring
------------
+Code
+----
 
  - Less redundant code in appserver.py and service.py.
-
-
-Unit tests
-----------
-
- - The goal is 100% coverage.
+ - Higher test coverage.
 
 
 Documentation
