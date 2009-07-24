@@ -5,7 +5,7 @@
 
 You don't have to install the Google App Engine distribution, because [http://pypi.python.org/pypi/zc.buildout zc.buildout] will install it for you. Only the Python interpreter is needed. See http://code.google.com/intl/de/appengine/docs/python/overview.html which Python version is supported by the Google App Engine SDK.
 
-It is advisable to install this demo into a [http://pypi.python.org/pypi/virtualenv virtualenv] in order to obtain isolation from any “system” packages you’ve got installed in your Python version.
+It is advisable to install twistedae into a [http://pypi.python.org/pypi/virtualenv virtualenv] in order to obtain isolation from any “system” packages you’ve got installed in your Python version.
 
 = Installation =
 
