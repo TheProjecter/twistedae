@@ -1,0 +1,25 @@
+#summary Brief documentation on installing twistedae.
+#labels Featured,Phase-Deploy,Phase-Requirements
+
+= Before you install =
+
+You don't have to install the Google App Engine distribution, because [http://pypi.python.org/pypi/zc.buildout zc.buildout] will install it for you. Only the Python interpreter is needed. See http://code.google.com/intl/de/appengine/docs/python/overview.html which Python version is supported by the Google App Engine SDK.
+
+It is advisable to install this demo into a [http://pypi.python.org/pypi/virtualenv virtualenv] in order to obtain isolation from any “system” packages you’ve got installed in your Python version.
+
+= Installation =
+
+ * Check out the sources:
+  {{{
+  $ svn checkout http://twistedae.googlecode.com/svn/trunk/ twistedae
+  }}}
+
+ * Build and run the application:
+  {{{
+  $ cd twistedae
+  $ python bootstrap/bootstrap.py
+  $ ./bin/buildout
+  $ ./bin/appserver parts/demo
+  }}}
+
+ * Access the application using a web browser with the following URL: http://localhost:8080/
