@@ -3,8 +3,10 @@ twistedae - Google App Engine on Twisted
 ========================================
 
 The twistedae project aims at running the Google App Engine SDK on top of the
-Twisted framework. Concurrent request handling is just one of the benefits.
-10gen's MongoDB App Engine Connector makes it easy to use MongoDB as datastore.
+Twisted framework. Concurrent request handling is just one of the benefits. It
+delivers the parts for building your own scalable app engine while staying
+compatible with Google's API. This allows the development of applications that
+can either run in your own or in Google's cloud.
 
 At this point the project is a proof of concept. It basically replaces the
 SDK's BaseHTTPServer with twisted.web and includes 10gen's datastore stub for
