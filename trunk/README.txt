@@ -40,7 +40,7 @@ Testing
 
 Run unit tests by typing::
 
-  $ bin/trial twistedae.tests.service
+  $ bin/trial twistedae
 
 
 Installing
