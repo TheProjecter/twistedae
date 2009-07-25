@@ -15,6 +15,7 @@
 # limitations under the License.
 """Demo application."""
 
+import google.appengine.api.labs.taskqueue
 import google.appengine.ext.db
 import google.appengine.ext.webapp
 import google.appengine.ext.webapp.template
@@ -22,6 +23,12 @@ import random
 import wsgiref.handlers
 
 NUM_SHARDS = 20
+
+
+class SimpleNote(google.appengine.ext.db.Model):
+    """Very simple note model."""
+
+    body = google.appengine.ext.db.StringProperty()
 
 
 class SimpleCounterShard(google.appengine.ext.db.Model):
@@ -62,13 +69,22 @@ class DemoRequestHandler(google.appengine.ext.webapp.RequestHandler):
 
         increment()
         count = get_count() 
+        google.appengine.api.labs.taskqueue.add(url='/makenote')
         vars = dict(count=count, env=self.request)
         output = google.appengine.ext.webapp.template.render('index.html', vars)
         self.response.out.write(output)
 
+
+class NoteWorker(google.appengine.ext.webapp.RequestHandler):
+    """Stores notes."""
+
+    def post(self):
+        """Handles post."""
+
  
 app = google.appengine.ext.webapp.WSGIApplication([
     ('/', DemoRequestHandler),
+    ('/makenote', NoteWorker),
 ], debug=True)
 
 
