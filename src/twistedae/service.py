@@ -44,11 +44,8 @@ os.chdir(os.environ['APP_PATH'])
 sys.path.insert(0, os.environ['APP_PATH'])
 conf, matcher = google.appengine.tools.dev_appserver.LoadAppConfig('.', {})
 os.environ['APPLICATION_ID'] = conf.application
+twistedae.appserver.setupStubs(conf)
 twistedae.appserver.applyConfigToWSGIResource(conf, root)
-twistedae.appserver.setupDatastore(conf.application,
-                                   'dev_appserver.datastore',
-                                   'dev_appserver.datastore.history',
-                                   False, False)
 
 # The main site
 site = twisted.web.server.Site(root)

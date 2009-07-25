@@ -18,6 +18,7 @@
 import mongodb.datastore_mongo_stub
 import google.appengine.api.apiproxy_stub_map
 import google.appengine.api.datastore_file_stub
+import google.appengine.api.labs.taskqueue.taskqueue_stub
 import google.appengine.tools.dev_appserver
 import logging
 import os
@@ -104,17 +105,38 @@ def setupDatastore(app_id, datastore, history, require_indexes, trusted):
     datastore_path = os.path.join(tmp_dir, datastore)
     history_path = os.path.join(tmp_dir, history)
 
-    google.appengine.api.apiproxy_stub_map.apiproxy = \
-                    google.appengine.api.apiproxy_stub_map.APIProxyStubMap()
-
     # We use the SDK's file datastore implementation.
     datastore = google.appengine.api.datastore_file_stub.DatastoreFileStub(
         app_id, datastore_path, history_path, require_indexes=require_indexes,
         trusted=trusted)
     #datastore = mongodb.datastore_mongo_stub.DatastoreMongoStub(
     #    app_id, datastore_path, history_path, require_indexes=require_indexes)
+
     google.appengine.api.apiproxy_stub_map.apiproxy.RegisterStub(
         'datastore_v3', datastore)
+
+
+def setupTaskQueue(root_path='.'):
+    """Sets up task queue."""
+
+    module = google.appengine.api.labs.taskqueue.taskqueue_stub
+    taskqueue = module.TaskQueueServiceStub(root_path=root_path)
+    google.appengine.api.apiproxy_stub_map.apiproxy.RegisterStub(
+        'taskqueue', taskqueue)
+
+
+def setupStubs(conf):
+    """Sets up api proxy stubs."""
+
+    google.appengine.api.apiproxy_stub_map.apiproxy = \
+                    google.appengine.api.apiproxy_stub_map.APIProxyStubMap()
+
+    setupDatastore(conf.application,
+                   'dev_appserver.datastore',
+                   'dev_appserver.datastore.history',
+                   False, False)
+
+    setupTaskQueue()
 
 
 def main():
@@ -142,10 +164,7 @@ def main():
 
     # Setup application
     os.environ['APPLICATION_ID'] = conf.application
-    setupDatastore(conf.application,
-                   'dev_appserver.datastore',
-                   'dev_appserver.datastore.history',
-                   False, False)
+    setupStubs(conf)
     applyConfigToWSGIResource(conf, root)
 
     # Setup site
