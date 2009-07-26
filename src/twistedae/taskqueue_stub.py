@@ -21,7 +21,17 @@ from google.appengine.api.labs.taskqueue import taskqueue_service_pb
 from google.appengine.api.labs.taskqueue import taskqueue_stub
 
 
-class TwistedTaskQueueServiceStub(apiproxy_stub.APIProxyStub):
+def _CompareEta(a, b):
+    """Python sort comparator for task ETAs."""
+
+    if a.eta_usec() > b.eta_usec():
+      return 1
+    if a.eta_usec() < b.eta_usec():
+      return -1
+    return 0
+
+
+class TaskQueueServiceStub(apiproxy_stub.APIProxyStub):
     """Twisted based task queue service stub."""
 
     queue_yaml_parser = taskqueue_stub._ParseQueueYaml
@@ -56,3 +66,43 @@ class TwistedTaskQueueServiceStub(apiproxy_stub.APIProxyStub):
         tasks.append(request)
         tasks.sort(_CompareEta)
         return
+
+    def GetQueues(self):
+        """Gets all the applications's queues.
+
+        Returns:
+          A list of dictionaries, where each dictionary contains one queue's
+          attributes.
+        """
+
+        queues = []
+        return queues
+
+    def GetTasks(self, queue_name):
+        """Gets a queue's tasks.
+
+        Args:
+          queue_name: Queue's name to return tasks for.
+
+        Returns:
+          A list of dictionaries, where each dictionary contains one task's
+          attributes.
+        """
+
+        tasks = []
+        return tasks
+
+    def DeleteTask(self, queue_name, task_name):
+        """Deletes a task from a queue.
+
+        Args:
+          queue_name: the name of the queue to delete the task from.
+          task_name: the name of the task to delete.
+        """
+
+    def FlushQueue(self, queue_name):
+        """Removes all tasks from a queue.
+
+        Args:
+          queue_name: the name of the queue to remove tasks from.
+        """
