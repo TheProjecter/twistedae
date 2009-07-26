@@ -16,19 +16,15 @@
 """Demo application."""
 
 import google.appengine.api.labs.taskqueue
+import google.appengine.api.memcache
 import google.appengine.ext.db
 import google.appengine.ext.webapp
 import google.appengine.ext.webapp.template
 import random
+import time
 import wsgiref.handlers
 
 NUM_SHARDS = 20
-
-
-class SimpleNote(google.appengine.ext.db.Model):
-    """Very simple note model."""
-
-    body = google.appengine.ext.db.StringProperty()
 
 
 class SimpleCounterShard(google.appengine.ext.db.Model):
@@ -61,6 +57,32 @@ def increment():
     google.appengine.ext.db.run_in_transaction(transaction)
 
 
+class Note(google.appengine.ext.db.Model):
+    """Very simple note model."""
+
+    body = google.appengine.ext.db.StringProperty()
+    time = google.appengine.ext.db.DateTimeProperty(auto_now=True)
+
+
+def render_notes():
+    notes = google.appengine.ext.db.GqlQuery(
+        "SELECT * FROM Note ORDER BY time DESC LIMIT 10")
+
+    return '\n'.join(['<li>%s - %s</li>' % (n.time, n.body) for n in notes])
+
+
+def get_notes():
+    notes = google.appengine.api.memcache.get("notes")
+    if notes is not None:
+        return notes
+    else:
+        notes = render_notes()
+        if not google.appengine.api.memcache.add("notes", notes, 10):
+            logging.error("Writing to memcache failed")
+
+        return notes
+
+
 class DemoRequestHandler(google.appengine.ext.webapp.RequestHandler):
     """Simple request handler."""
 
@@ -69,8 +91,10 @@ class DemoRequestHandler(google.appengine.ext.webapp.RequestHandler):
 
         increment()
         count = get_count() 
-        google.appengine.api.labs.taskqueue.add(url='/makenote')
-        vars = dict(count=count, env=self.request)
+        notes = get_notes()
+        params = dict(count=count)
+        google.appengine.api.labs.taskqueue.add(url='/makenote', params=params)
+        vars = dict(count=count, env=self.request, notes=notes)
         output = google.appengine.ext.webapp.template.render('index.html', vars)
         self.response.out.write(output)
 
@@ -80,6 +104,10 @@ class NoteWorker(google.appengine.ext.webapp.RequestHandler):
 
     def post(self):
         """Handles post."""
+
+        note = Note()
+        note.body = self.request.get('count')
+        note.put()
 
  
 app = google.appengine.ext.webapp.WSGIApplication([
