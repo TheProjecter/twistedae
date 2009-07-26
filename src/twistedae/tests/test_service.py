@@ -19,7 +19,7 @@ import twistedae.service
 import twisted.trial.unittest
 
 
-class TestCase(twisted.trial.unittest.TestCase):
+class ServiceTestCase(twisted.trial.unittest.TestCase):
     """Testing the twistedae backend."""
 
     def testServer(self):

@@ -17,11 +17,12 @@
 
 import google.appengine.api.apiproxy_stub_map
 import google.appengine.api.labs.taskqueue
+import os
 import twistedae.taskqueue_stub
 import twisted.trial.unittest
 
 
-class TestCase(twisted.trial.unittest.TestCase):
+class TaskQueueTestCase(twisted.trial.unittest.TestCase):
     """Testing the twistedae task queue."""
 
     def setUp(self):
@@ -29,12 +30,28 @@ class TestCase(twisted.trial.unittest.TestCase):
 
         google.appengine.api.apiproxy_stub_map.apiproxy = \
                     google.appengine.api.apiproxy_stub_map.APIProxyStubMap()
-        taskqueue = twistedae.taskqueue_stub.TaskQueueServiceStub(
-            root_path='.')
+
+        # We use the taks queue implemntation of Google's SDK to write unit
+        # tests and switch to our implementation when finfished.
+
+        #taskqueue = twistedae.taskqueue_stub.TaskQueueServiceStub(
+        #    root_path=os.path.dirname(__file__))
+        #google.appengine.api.apiproxy_stub_map.apiproxy.RegisterStub(
+        #    'taskqueue', taskqueue)
+
+        taskqueue = (google.appengine.api.labs.taskqueue.taskqueue_stub.
+                     TaskQueueServiceStub(root_path=os.path.dirname(__file__)))
         google.appengine.api.apiproxy_stub_map.apiproxy.RegisterStub(
             'taskqueue', taskqueue)
 
-    def testAddingTask(self):
-        """Test for adding a task."""
+        self.stub = google.appengine.api.apiproxy_stub_map.apiproxy.GetStub(
+            'taskqueue')
+
+    def testAddingTasks(self):
+        """Tests for adding tasks."""
 
         google.appengine.api.labs.taskqueue.add(url='/run')
+        assert self.stub.GetTasks('default')[0].get('url') == '/run'
+        google.appengine.api.labs.taskqueue.Queue('test').add(
+            google.appengine.api.labs.taskqueue.Task(url='/foo'))
+        assert self.stub.GetTasks('test')[0].get('url') == '/foo'
