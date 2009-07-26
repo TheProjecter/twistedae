@@ -31,7 +31,7 @@ class TaskQueueTestCase(twisted.trial.unittest.TestCase):
         google.appengine.api.apiproxy_stub_map.apiproxy = \
                     google.appengine.api.apiproxy_stub_map.APIProxyStubMap()
 
-        # We use the taks queue implemntation of Google's SDK to write unit
+        # We use the task queue implemntation of Google's SDK to write unit
         # tests and switch to our implementation when finfished.
 
         #taskqueue = twistedae.taskqueue_stub.TaskQueueServiceStub(
