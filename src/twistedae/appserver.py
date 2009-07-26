@@ -19,6 +19,7 @@ import mongodb.datastore_mongo_stub
 import google.appengine.api.apiproxy_stub_map
 import google.appengine.api.datastore_file_stub
 import google.appengine.api.labs.taskqueue.taskqueue_stub
+import google.appengine.api.memcache.memcache_stub
 import google.appengine.tools.dev_appserver
 import logging
 import os
@@ -116,6 +117,13 @@ def setupDatastore(app_id, datastore, history, require_indexes, trusted):
         'datastore_v3', datastore)
 
 
+def setupMemcache():
+    """Sets up memcache."""
+
+    google.appengine.api.apiproxy_stub_map.apiproxy.RegisterStub('memcache',
+        google.appengine.api.memcache.memcache_stub.MemcacheServiceStub())
+
+
 def setupTaskQueue(root_path='.'):
     """Sets up task queue."""
 
@@ -135,6 +143,8 @@ def setupStubs(conf):
                    'dev_appserver.datastore',
                    'dev_appserver.datastore.history',
                    False, False)
+ 
+    setupMemcache()
 
     setupTaskQueue()
 
