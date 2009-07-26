@@ -14,6 +14,17 @@ MongoDB. With twistedae it is totally unnecessary to patch the Google App
 Engine SDK.
 
 
+Copyright and license
+---------------------
+
+Copyright 2009 Tobias Rodäbel
+
+This software is released under the Apache License, Version 2.0. You may obtain
+a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+
 Running the server out of the box
 ---------------------------------
 
