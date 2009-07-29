@@ -18,12 +18,12 @@
 import mongodb.datastore_mongo_stub
 import google.appengine.api.apiproxy_stub_map
 import google.appengine.api.datastore_file_stub
-import google.appengine.api.labs.taskqueue.taskqueue_stub
 import google.appengine.api.memcache.memcache_stub
 import google.appengine.tools.dev_appserver
 import logging
 import os
 import sys
+import taskqueue_stub
 import twisted.internet.reactor
 import twisted.python.hook
 import twisted.python.threadpool
@@ -127,8 +127,7 @@ def setupMemcache():
 def setupTaskQueue(root_path='.'):
     """Sets up task queue."""
 
-    module = google.appengine.api.labs.taskqueue.taskqueue_stub
-    taskqueue = module.TaskQueueServiceStub(root_path=root_path)
+    taskqueue = taskqueue_stub.TaskQueueServiceStub(root_path=root_path)
     google.appengine.api.apiproxy_stub_map.apiproxy.RegisterStub(
         'taskqueue', taskqueue)
 
