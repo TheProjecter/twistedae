@@ -19,6 +19,7 @@
 from google.appengine.api import apiproxy_stub
 from google.appengine.api.labs.taskqueue import taskqueue_service_pb
 from google.appengine.api.labs.taskqueue import taskqueue_stub
+import logging
 
 
 def _CompareEta(a, b):
@@ -65,6 +66,9 @@ class TaskQueueServiceStub(apiproxy_stub.APIProxyStub):
         tasks = self.taskqueues.setdefault(request.queue_name(), [])
         tasks.append(request)
         tasks.sort(_CompareEta)
+
+        logging.debug("%s" % tasks)
+
         return
 
     def GetQueues(self):
