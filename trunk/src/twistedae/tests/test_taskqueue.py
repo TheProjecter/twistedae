@@ -18,8 +18,20 @@
 import google.appengine.api.apiproxy_stub_map
 import google.appengine.api.labs.taskqueue
 import os
+import twistedae.taskqueue
 import twistedae.taskqueue_stub
 import twisted.trial.unittest
+import zope.interface
+
+
+class TaskQueueServiceMock(object):
+    """Simulates a task queue service for testing."""
+
+    zope.interface.implements(twistedae.taskqueue.ITaskQueueService)
+
+    @staticmethod
+    def schedule(request):
+        pass
 
 
 class TaskQueueTestCase(twisted.trial.unittest.TestCase):
@@ -31,18 +43,17 @@ class TaskQueueTestCase(twisted.trial.unittest.TestCase):
         google.appengine.api.apiproxy_stub_map.apiproxy = \
                     google.appengine.api.apiproxy_stub_map.APIProxyStubMap()
 
-        # We use the task queue implemntation of Google's SDK to write unit
-        # tests and switch to our implementation when finfished.
-
-        #taskqueue = twistedae.taskqueue_stub.TaskQueueServiceStub(
-        #    root_path=os.path.dirname(__file__))
-        #google.appengine.api.apiproxy_stub_map.apiproxy.RegisterStub(
-        #    'taskqueue', taskqueue)
-
-        taskqueue = (google.appengine.api.labs.taskqueue.taskqueue_stub.
-                     TaskQueueServiceStub(root_path=os.path.dirname(__file__)))
+        taskqueue = twistedae.taskqueue_stub.TaskQueueServiceStub(
+            root_path=os.path.dirname(__file__))
         google.appengine.api.apiproxy_stub_map.apiproxy.RegisterStub(
             'taskqueue', taskqueue)
+
+        taskqueue.taskqueue_service = TaskQueueServiceMock()
+
+        #taskqueue = (google.appengine.api.labs.taskqueue.taskqueue_stub.
+        #             TaskQueueServiceStub(root_path=os.path.dirname(__file__)))
+        #google.appengine.api.apiproxy_stub_map.apiproxy.RegisterStub(
+        #    'taskqueue', taskqueue)
 
         self.stub = google.appengine.api.apiproxy_stub_map.apiproxy.GetStub(
             'taskqueue')
@@ -55,3 +66,5 @@ class TaskQueueTestCase(twisted.trial.unittest.TestCase):
         google.appengine.api.labs.taskqueue.Queue('test').add(
             google.appengine.api.labs.taskqueue.Task(url='/foo'))
         assert self.stub.GetTasks('test')[0].get('url') == '/foo'
+        assert self.stub.GetQueues()[0]['name'] == 'default'
+        assert self.stub.GetQueues()[0]['tasks_in_queue'] == 1
