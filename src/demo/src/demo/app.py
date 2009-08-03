@@ -21,7 +21,6 @@ import google.appengine.ext.db
 import google.appengine.ext.webapp
 import google.appengine.ext.webapp.template
 import random
-import time
 import wsgiref.handlers
 
 NUM_SHARDS = 20
@@ -33,13 +32,11 @@ class SimpleCounterShard(google.appengine.ext.db.Model):
     count = google.appengine.ext.db.IntegerProperty(required=True, default=0)   
 
 
-def get_count():
-    """Retrieves the value for a given sharded counter."""
+class Note(google.appengine.ext.db.Model):
+    """Very simple note model."""
 
-    total = 0
-    for counter in SimpleCounterShard.all():
-        total += counter.count
-    return total
+    body = google.appengine.ext.db.StringProperty()
+    date = google.appengine.ext.db.DateTimeProperty(auto_now=True)
 
 
 def increment():
@@ -57,18 +54,13 @@ def increment():
     google.appengine.ext.db.run_in_transaction(transaction)
 
 
-class Note(google.appengine.ext.db.Model):
-    """Very simple note model."""
+def get_count():
+    """Retrieves the value for a given sharded counter."""
 
-    body = google.appengine.ext.db.StringProperty()
-    time = google.appengine.ext.db.DateTimeProperty(auto_now=True)
-
-
-def render_notes():
-    notes = google.appengine.ext.db.GqlQuery(
-        "SELECT * FROM Note ORDER BY time DESC LIMIT 10")
-
-    return '\n'.join(['<li>%s - %s</li>' % (n.time, n.body) for n in notes])
+    total = 0
+    for counter in SimpleCounterShard.all():
+        total += counter.count
+    return total
 
 
 def get_notes():
@@ -76,7 +68,9 @@ def get_notes():
     if notes is not None:
         return notes
     else:
-        notes = render_notes()
+        query = google.appengine.ext.db.GqlQuery(
+            "SELECT * FROM Note ORDER BY date DESC LIMIT 100")
+        notes = ['%s - %s' % (note.date, note.body) for note in query]
         if not google.appengine.api.memcache.add("notes", notes, 10):
             logging.error("Writing to memcache failed")
 
@@ -90,10 +84,10 @@ class DemoRequestHandler(google.appengine.ext.webapp.RequestHandler):
         """Handles get."""
 
         increment()
-        count = get_count() 
+        count = get_count()
         notes = get_notes()
-        params = dict(count=count)
-        google.appengine.api.labs.taskqueue.add(url='/makenote', params=params)
+        google.appengine.api.labs.taskqueue.add(url='/makenote',
+                                                payload=str(count))
         vars = dict(count=count, env=self.request, notes=notes)
         output = google.appengine.ext.webapp.template.render('index.html', vars)
         self.response.out.write(output)
@@ -106,7 +100,7 @@ class NoteWorker(google.appengine.ext.webapp.RequestHandler):
         """Handles post."""
 
         note = Note()
-        note.body = self.request.get('count')
+        note.body = self.request.body
         note.put()
 
  

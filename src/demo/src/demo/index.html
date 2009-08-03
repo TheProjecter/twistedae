@@ -11,8 +11,10 @@
     <h1>twistedae</h1>
     <div class="debug">{{ env }}</div>
     <p>Sharded counter value: {{ count }}</p>
-    <ul>
-      {{ notes }}
-    </ul>
+    <select size="10" multiple>
+    {% for note in notes %}
+      <option>{{ note }}</option>
+    {% endfor %}
+    </select>
   </body>
 </html

@@ -19,6 +19,7 @@ import mongodb.datastore_mongo_stub
 import google.appengine.api.apiproxy_stub_map
 import google.appengine.api.datastore_file_stub
 import google.appengine.api.memcache.memcache_stub
+import google.appengine.api.urlfetch_stub
 import google.appengine.tools.dev_appserver
 import logging
 import os
@@ -127,9 +128,15 @@ def setupMemcache():
 def setupTaskQueue(root_path='.'):
     """Sets up task queue."""
 
-    taskqueue = taskqueue_stub.TaskQueueServiceStub(root_path=root_path)
-    google.appengine.api.apiproxy_stub_map.apiproxy.RegisterStub(
-        'taskqueue', taskqueue)
+    google.appengine.api.apiproxy_stub_map.apiproxy.RegisterStub('taskqueue',
+        taskqueue_stub.TaskQueueServiceStub(root_path=root_path))
+
+
+def setupURLFetchStub():
+    """Sets up urlfetch."""
+
+    google.appengine.api.apiproxy_stub_map.apiproxy.RegisterStub('urlfetch',
+        google.appengine.api.urlfetch_stub.URLFetchServiceStub())
 
 
 def setupStubs(conf):
@@ -146,6 +153,8 @@ def setupStubs(conf):
     setupMemcache()
 
     setupTaskQueue()
+
+    setupURLFetchStub()
 
 
 def main():
