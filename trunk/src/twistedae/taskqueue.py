@@ -39,11 +39,12 @@ class Service(object):
 
     @classmethod
     def schedule(cls, request):
+        delta = 0.0
         eta = datetime.datetime.fromtimestamp(request.eta_usec()/1000000)
         now = datetime.datetime.utcnow()
-        delta = 0.0
         if eta > now:
-            raise NotImplemented # TODO: implement delayed task execution
+            td = eta - now
+            delta = 86400 * td.days + td.seconds + td.microseconds * 0.000001
 
         def callback():
             response = google.appengine.api.urlfetch.fetch(
