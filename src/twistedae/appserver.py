@@ -15,13 +15,13 @@
 # limitations under the License.
 """Simple appserver implementation."""
 
-import mongodb.datastore_mongo_stub
 import google.appengine.api.apiproxy_stub_map
 import google.appengine.api.datastore_file_stub
 import google.appengine.api.memcache.memcache_stub
 import google.appengine.api.urlfetch_stub
 import google.appengine.tools.dev_appserver
 import logging
+import mongodb.datastore_mongo_stub
 import os
 import sys
 import taskqueue_stub
