@@ -34,6 +34,7 @@ class ITaskQueueService(zope.interface.Interface):
 
 
 class TaskRunner(threading.Thread):
+    """Background thread for running a task."""
 
     def __init__(self, url, data, method):
         threading.Thread.__init__(self)
@@ -61,17 +62,17 @@ class Service(object):
     port = 8080
 
     @classmethod
-    def _urlopen(cls, request):
-        url = 'http://%s:%i%s' % (cls.addr, cls.port, request.url())
-        opener = TaskRunner(url, request.body(), request.method())
-        opener.start()
-        return
-
-    @classmethod
     def schedule(cls, request):
         eta = datetime.datetime.fromtimestamp(request.eta_usec()/1000000)
         now = datetime.datetime.utcnow()
         delta = 0.0
         if eta > now:
             raise NotImplemented
-        twisted.internet.reactor.callLater(delta, cls._urlopen, request)
+
+        def callback(request):
+            url = 'http://%s:%i%s' % (cls.addr, cls.port, request.url())
+            opener = TaskRunner(url, request.body(), request.method())
+            opener.start()
+            return
+
+        twisted.internet.reactor.callLater(delta, callback, request)
