@@ -16,14 +16,10 @@
 """Simple task queue implementation."""
 
 import datetime
-import google.appengine.api.labs.taskqueue.taskqueue_stub
 import google.appengine.api.urlfetch
 import logging
-import threading
 import twisted.internet.reactor
 import zope.interface
-
-_EtaDelta = google.appengine.api.labs.taskqueue.taskqueue_stub._EtaDelta
 
 
 class ITaskQueueService(zope.interface.Interface):
@@ -31,26 +27,6 @@ class ITaskQueueService(zope.interface.Interface):
 
     def schedule(request):
         """Schedules a task for the given request."""
-
-
-class TaskRunner(threading.Thread):
-    """Background thread for running a task."""
-
-    def __init__(self, url, data, method):
-        threading.Thread.__init__(self)
-        self.url = url
-        self.data = data
-        self.method = method
-
-    def run(self):
-        response = google.appengine.api.urlfetch.fetch(
-            url=self.url,
-            payload=self.data,
-            method=self.method,
-            headers={'Content-Type': 'text/plain'})
-        if response.status_code == 404:
-            raise Exception
-        return
 
 
 class Service(object):
@@ -67,12 +43,19 @@ class Service(object):
         now = datetime.datetime.utcnow()
         delta = 0.0
         if eta > now:
-            raise NotImplemented
+            raise NotImplemented # TODO: implement delayed task execution
 
-        def callback(request):
-            url = 'http://%s:%i%s' % (cls.addr, cls.port, request.url())
-            opener = TaskRunner(url, request.body(), request.method())
-            opener.start()
+        def callback():
+            response = google.appengine.api.urlfetch.fetch(
+                url='http://%s:%i%s' % (cls.addr, cls.port, request.url()),
+                payload=request.body(),
+                method=request.method(),
+                headers={'Content-Type': 'text/plain'})
+            if response.status_code != 200:
+                raise Exception
             return
 
-        twisted.internet.reactor.callLater(delta, callback, request)
+        twisted.internet.reactor.callLater(
+            delta,
+            twisted.internet.reactor.callInThread,
+            callback)
