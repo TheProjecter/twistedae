@@ -29,9 +29,11 @@ class TaskQueueServiceMock(object):
 
     zope.interface.implements(twistedae.taskqueue.ITaskQueueService)
 
-    @staticmethod
-    def schedule(request):
-        pass
+    requests = []
+
+    @classmethod
+    def schedule(cls, request):
+        cls.requests.append(request) 
 
 
 class TaskQueueTestCase(twisted.trial.unittest.TestCase):
@@ -62,9 +64,6 @@ class TaskQueueTestCase(twisted.trial.unittest.TestCase):
         """Tests for adding tasks."""
 
         google.appengine.api.labs.taskqueue.add(url='/run')
-        assert self.stub.GetTasks('default')[0].get('url') == '/run'
         google.appengine.api.labs.taskqueue.Queue('test').add(
             google.appengine.api.labs.taskqueue.Task(url='/foo'))
-        assert self.stub.GetTasks('test')[0].get('url') == '/foo'
-        assert self.stub.GetQueues()[0]['name'] == 'default'
-        assert self.stub.GetQueues()[0]['tasks_in_queue'] == 1
+        assert len(TaskQueueServiceMock.requests) == 2
