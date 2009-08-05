@@ -38,9 +38,8 @@ class Worker(object):
                 payload=request.body(),
                 method=request.method(),
                 headers={'Content-Type': 'text/plain'})
-            if response.status_code != 200:
-                raise Exception
-            self.queue.task_done()
+            if response.status_code == 200:
+                self.queue.task_done()
 
 
 class TaskQueueServiceStub(google.appengine.api.apiproxy_stub.APIProxyStub):
@@ -87,3 +86,22 @@ class TaskQueueServiceStub(google.appengine.api.apiproxy_stub.APIProxyStub):
         q.put(request)
 
         return
+
+    def GetQueues(self):
+        """Gets all the applications's queues.
+
+        Returns:
+            A list of dictionaries, where each dictionary contains one queue's
+            attributes.
+        """
+        queues = []
+
+        for k in self.taskqueues.keys():
+            queues.append(
+                dict(
+                    name=k,
+                    tasks_in_queue=self.taskqueues[k].unfinished_tasks
+                    )
+                )
+
+        return queues

@@ -28,7 +28,7 @@ class DummyURLFetchServiceStub(google.appengine.api.apiproxy_stub.APIProxyStub):
         super(DummyURLFetchServiceStub, self).__init__(service_name)
 
     def _Dynamic_Fetch(self, request, response):
-        response.set_statuscode(200)
+        response.set_statuscode(500)
 
 
 class TaskQueueTestCase(twisted.trial.unittest.TestCase):
@@ -62,3 +62,7 @@ class TaskQueueTestCase(twisted.trial.unittest.TestCase):
         google.appengine.api.labs.taskqueue.add(url='/run')
         google.appengine.api.labs.taskqueue.Queue('test').add(
             google.appengine.api.labs.taskqueue.Task(url='/foo'))
+        assert self.stub.GetQueues()[0]['name'] == 'default'
+        assert self.stub.GetQueues()[0]['tasks_in_queue'] == 1
+        assert self.stub.GetQueues()[1]['name'] == 'test'
+        assert self.stub.GetQueues()[1]['tasks_in_queue'] == 1
