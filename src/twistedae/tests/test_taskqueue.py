@@ -15,25 +15,20 @@
 # limitations under the License.
 """Unit tests for task queue."""
 
+import google.appengine.api.apiproxy_stub
 import google.appengine.api.apiproxy_stub_map
 import google.appengine.api.labs.taskqueue
 import os
-import twistedae.taskqueue
 import twistedae.taskqueue_stub
 import twisted.trial.unittest
-import zope.interface
 
 
-class TaskQueueServiceMock(object):
-    """Simulates a task queue service for testing."""
+class DummyURLFetchServiceStub(google.appengine.api.apiproxy_stub.APIProxyStub):
+    def __init__(self, service_name='urlfetch'):
+        super(DummyURLFetchServiceStub, self).__init__(service_name)
 
-    zope.interface.implements(twistedae.taskqueue.ITaskQueueService)
-
-    requests = []
-
-    @classmethod
-    def schedule(cls, request):
-        cls.requests.append(request) 
+    def _Dynamic_Fetch(self, request, response):
+        response.set_statuscode(200)
 
 
 class TaskQueueTestCase(twisted.trial.unittest.TestCase):
@@ -50,8 +45,6 @@ class TaskQueueTestCase(twisted.trial.unittest.TestCase):
         google.appengine.api.apiproxy_stub_map.apiproxy.RegisterStub(
             'taskqueue', taskqueue)
 
-        taskqueue.taskqueue_service = TaskQueueServiceMock()
-
         #taskqueue = (google.appengine.api.labs.taskqueue.taskqueue_stub.
         #             TaskQueueServiceStub(root_path=os.path.dirname(__file__)))
         #google.appengine.api.apiproxy_stub_map.apiproxy.RegisterStub(
@@ -60,10 +53,12 @@ class TaskQueueTestCase(twisted.trial.unittest.TestCase):
         self.stub = google.appengine.api.apiproxy_stub_map.apiproxy.GetStub(
             'taskqueue')
 
+        google.appengine.api.apiproxy_stub_map.apiproxy.RegisterStub(
+            'urlfetch', DummyURLFetchServiceStub())
+
     def testAddingTasks(self):
         """Tests for adding tasks."""
 
         google.appengine.api.labs.taskqueue.add(url='/run')
         google.appengine.api.labs.taskqueue.Queue('test').add(
             google.appengine.api.labs.taskqueue.Task(url='/foo'))
-        assert len(TaskQueueServiceMock.requests) == 2

@@ -15,18 +15,38 @@
 # limitations under the License.
 """Task queue implementation."""
 
+import Queue
 import google.appengine.api.apiproxy_stub
 from google.appengine.api.labs.taskqueue import taskqueue_service_pb
 from google.appengine.api.labs.taskqueue import taskqueue_stub
+import google.appengine.api.urlfetch
 import google.appengine.runtime.apiproxy_errors
-import taskqueue
+import threading
+
+
+class Worker(object):
+    """Runs within one or more daemonized threads."""
+
+    def __init__(self, queue):
+        self.queue = queue
+
+    def __call__(self):
+        while True:
+            request = self.queue.get()
+            response = google.appengine.api.urlfetch.fetch(
+                url='http://127.0.0.1:8080' + request.url(),
+                payload=request.body(),
+                method=request.method(),
+                headers={'Content-Type': 'text/plain'})
+            if response.status_code != 200:
+                raise Exception
+            self.queue.task_done()
 
 
 class TaskQueueServiceStub(google.appengine.api.apiproxy_stub.APIProxyStub):
     """Twisted based task queue service stub."""
 
     queue_yaml_parser = taskqueue_stub._ParseQueueYaml
-    taskqueue_service = taskqueue.Service()
 
     def __init__(self, service_name='taskqueue', root_path=None):
         super(TaskQueueServiceStub, self).__init__(service_name)
@@ -50,9 +70,20 @@ class TaskQueueServiceStub(google.appengine.api.apiproxy_stub.APIProxyStub):
                 taskqueue_service_pb.TaskQueueServiceError.UNKNOWN_QUEUE)
             return
 
+        if request.queue_name() not in self.taskqueues:
+            q = Queue.Queue()
+            self.taskqueues[request.queue_name()] = q
+            worker = Worker(q)
+            t = threading.Thread(target=worker)
+            t.setDaemon(True)
+            t.start()
+        else:
+            q = self.taskqueues[request.queue_name()]
+
         if not request.task_name():
             request.set_task_name('task%d' % self.next_task_id)
             self.next_task_id += 1
 
-        self.taskqueue_service.schedule(request)
+        q.put(request)
+
         return
