@@ -16,12 +16,17 @@
 """Task queue implementation."""
 
 import Queue
+import datetime
 import google.appengine.api.apiproxy_stub
 from google.appengine.api.labs.taskqueue import taskqueue_service_pb
 from google.appengine.api.labs.taskqueue import taskqueue_stub
 import google.appengine.api.urlfetch
 import google.appengine.runtime.apiproxy_errors
 import threading
+import time
+
+NUMBER_OF_WORKERS_PER_QUEUE = 1
+PORT = 8080
 
 
 class Worker(object):
@@ -33,13 +38,21 @@ class Worker(object):
     def __call__(self):
         while True:
             request = self.queue.get()
-            response = google.appengine.api.urlfetch.fetch(
-                url='http://127.0.0.1:8080' + request.url(),
-                payload=request.body(),
-                method=request.method(),
-                headers={'Content-Type': 'text/plain'})
-            if response.status_code == 200:
-                self.queue.task_done()
+            eta = datetime.datetime.fromtimestamp(request.eta_usec()/1000000)
+            now = datetime.datetime.utcnow()
+            if now > eta:
+                response = google.appengine.api.urlfetch.fetch(
+                    url='http://127.0.0.1:' + str(PORT) + request.url(),
+                    payload=request.body(),
+                    method=request.method(),
+                    headers={'Content-Type': 'text/plain'}
+                    )
+                if response.status_code == 200:
+                    self.queue.task_done()
+            else:
+                # Enqueue again after 0.5 seconds
+                time.sleep(.5)
+                self.queue.put(request)
 
 
 class TaskQueueServiceStub(google.appengine.api.apiproxy_stub.APIProxyStub):
@@ -72,10 +85,11 @@ class TaskQueueServiceStub(google.appengine.api.apiproxy_stub.APIProxyStub):
         if request.queue_name() not in self.taskqueues:
             q = Queue.Queue()
             self.taskqueues[request.queue_name()] = q
-            worker = Worker(q)
-            t = threading.Thread(target=worker)
-            t.setDaemon(True)
-            t.start()
+            for i in range(NUMBER_OF_WORKERS_PER_QUEUE):
+                worker = Worker(q)
+                t = threading.Thread(target=worker)
+                t.setDaemon(True)
+                t.start()
         else:
             q = self.taskqueues[request.queue_name()]
 
