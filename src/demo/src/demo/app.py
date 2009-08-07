@@ -58,7 +58,7 @@ def get_count():
     """Retrieves the value for a given sharded counter."""
 
     total = 0
-    for counter in SimpleCounterShard.all():
+    for counter in SimpleCounterShard.all().fetch(NUM_SHARDS):
         total += counter.count
     return total
 
@@ -69,7 +69,7 @@ def get_notes():
         return notes
     else:
         query = google.appengine.ext.db.GqlQuery(
-            "SELECT * FROM Note ORDER BY __key__ DESC LIMIT 100")
+            "SELECT * FROM Note ORDER BY date DESC LIMIT 100")
         notes = ['%s - %s' % (note.date, note.body) for note in query]
         if not google.appengine.api.memcache.add("notes", notes, 10):
             logging.error("Writing to memcache failed")
