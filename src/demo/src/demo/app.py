@@ -87,6 +87,11 @@ class DemoRequestHandler(google.appengine.ext.webapp.RequestHandler):
         increment()
         count = get_count()
         notes = get_notes()
+        eta = datetime.datetime.utcnow() + datetime.timedelta(0, 20)
+        google.appengine.api.labs.taskqueue.add(url='/makenote',
+                                                eta=eta,
+                                                payload="%s very delayed" %
+                                                    count)
         eta = datetime.datetime.utcnow() + datetime.timedelta(0, 10)
         google.appengine.api.labs.taskqueue.add(url='/makenote',
                                                 eta=eta,
