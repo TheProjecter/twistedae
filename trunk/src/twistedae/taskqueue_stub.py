@@ -34,25 +34,31 @@ class Worker(object):
 
     def __init__(self, queue):
         self.queue = queue
+        self.block = True
+
+    def handle_next(self):
+        request = self.queue.get(self.block)
+        eta = datetime.datetime.fromtimestamp(request.eta_usec()/1000000)
+        now = datetime.datetime.utcnow()
+        if now > eta:
+            response = google.appengine.api.urlfetch.fetch(
+                url='http://127.0.0.1:' + str(PORT) + request.url(),
+                payload=request.body(),
+                method=request.method(),
+                headers={'Content-Type': 'text/plain'}
+                )
+            if response.status_code == 200:
+                self.queue.task_done()
+        else:
+            if not self.queue.empty():
+                self.handle_next()
+            else:
+                time.sleep(0.1)
+            self.queue.put(request)
 
     def __call__(self):
         while True:
-            request = self.queue.get()
-            eta = datetime.datetime.fromtimestamp(request.eta_usec()/1000000)
-            now = datetime.datetime.utcnow()
-            if now > eta:
-                response = google.appengine.api.urlfetch.fetch(
-                    url='http://127.0.0.1:' + str(PORT) + request.url(),
-                    payload=request.body(),
-                    method=request.method(),
-                    headers={'Content-Type': 'text/plain'}
-                    )
-                if response.status_code == 200:
-                    self.queue.task_done()
-            else:
-                # Enqueue again after 0.5 seconds
-                time.sleep(.5)
-                self.queue.put(request)
+            self.handle_next()
 
 
 class TaskQueueServiceStub(google.appengine.api.apiproxy_stub.APIProxyStub):

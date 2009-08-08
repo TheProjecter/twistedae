@@ -15,6 +15,7 @@
 # limitations under the License.
 """Demo application."""
 
+import datetime
 import google.appengine.api.labs.taskqueue
 import google.appengine.api.memcache
 import google.appengine.ext.db
@@ -86,8 +87,12 @@ class DemoRequestHandler(google.appengine.ext.webapp.RequestHandler):
         increment()
         count = get_count()
         notes = get_notes()
+        eta = datetime.datetime.utcnow() + datetime.timedelta(0, 10)
         google.appengine.api.labs.taskqueue.add(url='/makenote',
+                                                eta=eta,
                                                 payload=str(count))
+        google.appengine.api.labs.taskqueue.add(url='/makenote',
+                                                payload="%s a" % count)
         vars = dict(count=count, env=self.request, notes=notes)
         output = google.appengine.ext.webapp.template.render('index.html', vars)
         self.response.out.write(output)
