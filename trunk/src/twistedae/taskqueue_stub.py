@@ -56,7 +56,7 @@ class Worker(object):
 
 
 class TaskQueueServiceStub(google.appengine.api.apiproxy_stub.APIProxyStub):
-    """Twisted based task queue service stub."""
+    """Task queue service stub."""
 
     yaml = google.appengine.api.labs.taskqueue.taskqueue_stub._ParseQueueYaml
 
