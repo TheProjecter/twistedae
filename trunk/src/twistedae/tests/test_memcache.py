@@ -59,6 +59,17 @@ class MemcacheTestCase(twisted.trial.unittest.TestCase):
         google.appengine.api.memcache.delete('data')
         assert google.appengine.api.memcache.get('data') == None
 
+    def testReplaceItem(self):
+        """Adds and replaces a cached item."""
+
+        first = "Little pig, little pig, let me come in!"
+        second = "Not by the hair on my chinny-chin-chin!"
+        third = "Then I'll huff, and I'll puff, and I'll blow your house in!"
+        google.appengine.api.memcache.add('first', first)
+        assert google.appengine.api.memcache.get('first') == first
+        google.appengine.api.memcache.replace('first', second)
+        assert google.appengine.api.memcache.get('first') == second
+
     def testFlushAll(self):
         """Flushes the whole cache."""
 
