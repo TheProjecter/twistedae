@@ -87,17 +87,18 @@ class DemoRequestHandler(google.appengine.ext.webapp.RequestHandler):
         increment()
         count = get_count()
         notes = get_notes()
-        eta = datetime.datetime.utcnow() + datetime.timedelta(0, 20)
+        now = datetime.datetime.utcnow()
+        eta = now + datetime.timedelta(0, 10)
         google.appengine.api.labs.taskqueue.add(url='/makenote',
                                                 eta=eta,
-                                                payload="%s very delayed" %
-                                                    count)
-        eta = datetime.datetime.utcnow() + datetime.timedelta(0, 10)
-        google.appengine.api.labs.taskqueue.add(url='/makenote',
-                                                eta=eta,
-                                                payload="%s delayed" % count)
+                                                payload="%i delayed" % count)
         google.appengine.api.labs.taskqueue.add(url='/makenote',
                                                 payload=str(count))
+        eta = now + datetime.timedelta(0, 20)
+        google.appengine.api.labs.taskqueue.add(url='/makenote',
+                                                eta=eta,
+                                                payload="%i very delayed" %
+                                                    count)
         vars = dict(count=count, env=self.request, notes=notes)
         output = google.appengine.ext.webapp.template.render('index.html', vars)
         self.response.out.write(output)
