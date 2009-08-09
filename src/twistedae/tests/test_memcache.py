@@ -58,3 +58,12 @@ class MemcacheTestCase(twisted.trial.unittest.TestCase):
         assert google.appengine.api.memcache.get('data') == data
         google.appengine.api.memcache.delete('data')
         assert google.appengine.api.memcache.get('data') == None
+
+    def testFlushAll(self):
+        """Flushes the whole cache."""
+
+        spam = "Hello, World!"
+        google.appengine.api.memcache.set('spam', spam)
+        assert google.appengine.api.memcache.get('spam') == spam
+        google.appengine.api.memcache.flush_all()
+        assert google.appengine.api.memcache.get('spam') == None
