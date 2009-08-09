@@ -120,7 +120,7 @@ class MemcacheServiceStub(google.appengine.api.apiproxy_stub.APIProxyStub):
             response: A MemcacheFlushResponse.
         """
 
-        raise NotImplementedError
+        self._cache.flush_all()
 
     def _Dynamic_Stats(self, request, response):
         """Implementation of MemcacheService::Stats().
