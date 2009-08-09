@@ -53,7 +53,7 @@ class Worker(object):
             if not self.queue.empty():
                 self.handle_next()
             else:
-                time.sleep(0.1)
+                time.sleep(0.5)
             self.queue.put(request)
 
     def __call__(self):
