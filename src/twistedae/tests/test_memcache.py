@@ -17,6 +17,7 @@
 
 import google.appengine.api.apiproxy_stub_map
 import google.appengine.api.memcache.memcache_stub
+import time
 import twistedae.memcache_stub
 import twisted.trial.unittest
 
@@ -47,7 +48,7 @@ class MemcacheTestCase(twisted.trial.unittest.TestCase):
         """Simple in-memory caching."""
 
         foo = "bar"
-        google.appengine.api.memcache.add('foo', foo, 10)
+        google.appengine.api.memcache.add('foo', foo)
         assert google.appengine.api.memcache.get('foo') == foo
 
     def testDeletingItem(self):
@@ -58,6 +59,15 @@ class MemcacheTestCase(twisted.trial.unittest.TestCase):
         assert google.appengine.api.memcache.get('data') == data
         google.appengine.api.memcache.delete('data')
         assert google.appengine.api.memcache.get('data') == None
+
+    def testExpirationTime(self):
+        """Adds an expireing item."""
+
+        bye = "Good bye!"
+        google.appengine.api.memcache.add('bye', bye, 1)
+        assert google.appengine.api.memcache.get('bye') == bye
+        time.sleep(1)
+        assert google.appengine.api.memcache.get('bye') == None
 
     def testReplaceItem(self):
         """Adds and replaces a cached item."""
