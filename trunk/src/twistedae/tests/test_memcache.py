@@ -16,7 +16,7 @@
 """Unit tests for memcache."""
 
 import google.appengine.api.apiproxy_stub_map
-import google.appengine.api.memcache
+import google.appengine.api.memcache.memcache_stub
 import twistedae.memcache_stub
 import twisted.trial.unittest
 
@@ -28,7 +28,7 @@ class MemcacheTestCase(twisted.trial.unittest.TestCase):
         """Register twistedae's memcache API proxy stub."""
 
         google.appengine.api.apiproxy_stub_map.apiproxy = \
-                    google.appengine.api.apiproxy_stub_map.APIProxyStubMap()
+            google.appengine.api.apiproxy_stub_map.APIProxyStubMap()
 
         #google.appengine.api.apiproxy_stub_map.apiproxy.RegisterStub(
         #    'memcache', twistedae.memcache_stub.MemcacheServiceStub())
@@ -42,6 +42,6 @@ class MemcacheTestCase(twisted.trial.unittest.TestCase):
     def testCachingItem(self):
         """Simple in-memory caching."""
 
-        foo = [0, 1, 2, 3]
+        foo = "bar"
         google.appengine.api.memcache.add('foo', foo, 10)
         assert google.appengine.api.memcache.get('foo') == foo
