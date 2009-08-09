@@ -75,7 +75,7 @@ class MemcacheServiceStub(google.appengine.api.apiproxy_stub.APIProxyStub):
                  old_entry is not None)):
 
                 if (old_entry is None or set_policy == MemcacheSetRequest.SET):
-                    self._cache.set(key, item.value())
+                    self._cache.set(key, item.value(), item.expiration_time())
                     set_status = MemcacheSetResponse.STORED
 
             response.add_set_status(set_status)
