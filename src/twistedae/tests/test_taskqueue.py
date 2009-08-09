@@ -45,6 +45,8 @@ class TaskQueueTestCase(twisted.trial.unittest.TestCase):
         google.appengine.api.apiproxy_stub_map.apiproxy.RegisterStub(
             'taskqueue', taskqueue)
 
+        # Uncomment to run tests against the SDK's default service stub
+        #
         #taskqueue = (google.appengine.api.labs.taskqueue.taskqueue_stub.
         #             TaskQueueServiceStub(root_path=os.path.dirname(__file__)))
         #google.appengine.api.apiproxy_stub_map.apiproxy.RegisterStub(
