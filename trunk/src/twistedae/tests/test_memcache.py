@@ -30,10 +30,14 @@ class MemcacheTestCase(twisted.trial.unittest.TestCase):
         google.appengine.api.apiproxy_stub_map.apiproxy = \
             google.appengine.api.apiproxy_stub_map.APIProxyStubMap()
 
+        # Uncomment to run tests against twistedae's memcache service stub.
+        # Requires running memcached.
+        #
         #google.appengine.api.apiproxy_stub_map.apiproxy.RegisterStub(
         #    'memcache', twistedae.memcache_stub.MemcacheServiceStub())
 
-        google.appengine.api.apiproxy_stub_map.apiproxy.RegisterStub('memcache',
+        google.appengine.api.apiproxy_stub_map.apiproxy.RegisterStub(
+            'memcache',
             google.appengine.api.memcache.memcache_stub.MemcacheServiceStub())
 
         self.stub = google.appengine.api.apiproxy_stub_map.apiproxy.GetStub(
