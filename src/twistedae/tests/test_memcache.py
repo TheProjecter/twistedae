@@ -87,3 +87,15 @@ class MemcacheTestCase(twisted.trial.unittest.TestCase):
         assert google.appengine.api.memcache.get('spam') == spam
         google.appengine.api.memcache.flush_all()
         assert google.appengine.api.memcache.get('spam') == None
+
+    def testStats(self):
+        """Tesing stats."""
+
+        assert google.appengine.api.memcache.get_stats()['hits'] == 0
+        lorem = "Lorem ipsum"
+        google.appengine.api.memcache.set('lorem', lorem)
+        assert google.appengine.api.memcache.get('lorem') == lorem
+        assert google.appengine.api.memcache.get_stats()['hits'] == 1
+        assert google.appengine.api.memcache.get_stats()['misses'] == 0
+        assert google.appengine.api.memcache.get('unknown') == None
+        assert google.appengine.api.memcache.get_stats()['misses'] == 1
