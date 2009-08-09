@@ -55,7 +55,10 @@ class MemcacheServiceStub(google.appengine.api.apiproxy_stub.APIProxyStub):
             item = response.add_item()
             item.set_key(key)
             value = self._cache.get(key)
-            item.set_value(value)
+            if value is None:
+                response.Clear()
+            else:
+                item.set_value(value)
 
     def _Dynamic_Set(self, request, response):
         """Implementation of MemcacheService::Set().
@@ -87,8 +90,17 @@ class MemcacheServiceStub(google.appengine.api.apiproxy_stub.APIProxyStub):
             request: A MemcacheDeleteRequest.
             response: A MemcacheDeleteResponse.
         """
+        for item in request.item_list():
+            key = item.key()
+            entry = self._cache.get(key)
+            delete_status = MemcacheDeleteResponse.DELETED
 
-        raise NotImplementedError
+            if entry is None:
+                delete_status = MemcacheDeleteResponse.NOT_FOUND
+            else:
+                self._cache.delete(key)
+
+            response.add_delete_status(delete_status)
 
     def _Dynamic_Increment(self, request, response):
         """Implementation of MemcacheService::Increment().
@@ -96,6 +108,26 @@ class MemcacheServiceStub(google.appengine.api.apiproxy_stub.APIProxyStub):
         Args:
             request: A MemcacheIncrementRequest.
             response: A MemcacheIncrementResponse.
+        """
+
+        raise NotImplementedError
+
+    def _Dynamic_FlushAll(self, request, response):
+        """Implementation of MemcacheService::FlushAll().
+
+        Args:
+            request: A MemcacheFlushRequest.
+            response: A MemcacheFlushResponse.
+        """
+
+        raise NotImplementedError
+
+    def _Dynamic_Stats(self, request, response):
+        """Implementation of MemcacheService::Stats().
+
+        Args:
+            request: A MemcacheStatsRequest.
+            response: A MemcacheStatsResponse.
         """
 
         raise NotImplementedError

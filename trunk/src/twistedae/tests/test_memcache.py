@@ -43,9 +43,18 @@ class MemcacheTestCase(twisted.trial.unittest.TestCase):
         self.stub = google.appengine.api.apiproxy_stub_map.apiproxy.GetStub(
             'memcache')
 
-    def testCachingItem(self):
+    def testAddingItem(self):
         """Simple in-memory caching."""
 
         foo = "bar"
         google.appengine.api.memcache.add('foo', foo, 10)
         assert google.appengine.api.memcache.get('foo') == foo
+
+    def testDeletingItem(self):
+        """Tryies to set and delete a key and its value."""
+
+        data = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+        google.appengine.api.memcache.set('data', data)
+        assert google.appengine.api.memcache.get('data') == data
+        google.appengine.api.memcache.delete('data')
+        assert google.appengine.api.memcache.get('data') == None
