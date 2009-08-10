@@ -51,6 +51,10 @@ class MemcacheTestCase(twisted.trial.unittest.TestCase):
         google.appengine.api.memcache.add('foo', foo)
         assert google.appengine.api.memcache.get('foo') == foo
 
+        tres_bien = u"Très bien"
+        google.appengine.api.memcache.add('tres_bien', tres_bien)
+        assert google.appengine.api.memcache.get('tres_bien') == tres_bien
+
         items = [u'foo', 'bar', {1: 'one'}, 42L]
         google.appengine.api.memcache.add('items', items)
         assert google.appengine.api.memcache.get('items') == items
@@ -88,8 +92,10 @@ class MemcacheTestCase(twisted.trial.unittest.TestCase):
         assert google.appengine.api.memcache.get('counter') == 0
         google.appengine.api.memcache.incr('counter')
         assert google.appengine.api.memcache.get('counter') == 1
+        google.appengine.api.memcache.incr('counter', delta=2)
+        assert google.appengine.api.memcache.get('counter') == 3
         google.appengine.api.memcache.decr('counter')
-        assert google.appengine.api.memcache.get('counter') == 0
+        assert google.appengine.api.memcache.get('counter') == 2
 
     def testFlushAll(self):
         """Flushes the whole cache."""

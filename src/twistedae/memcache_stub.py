@@ -19,6 +19,7 @@ import cPickle
 import google.appengine.api.apiproxy_stub
 import google.appengine.api.memcache.memcache_service_pb
 import pylibmc
+import simplejson
 
 DEFAULT_ADDR = '127.0.0.1'
 DEFAULT_PORT = 11211
@@ -32,10 +33,6 @@ MemcacheIncrementRequest = (google.appengine.api.memcache.memcache_service_pb.
 MemcacheDeleteResponse   = (google.appengine.api.memcache.memcache_service_pb.
                             MemcacheDeleteResponse)
 
-_rules = (
-    (cPickle.loads, google.appengine.api.memcache.TYPE_PICKLED, Exception),
-    (long, google.appengine.api.memcache.TYPE_LONG, ValueError)
-)
 
 class MemcacheServiceStub(google.appengine.api.apiproxy_stub.APIProxyStub):
     """Memcache service stub.
@@ -70,18 +67,17 @@ class MemcacheServiceStub(google.appengine.api.apiproxy_stub.APIProxyStub):
             if value is None:
                 continue
             else:
+                flags = 0
+                stored_flags, stored_value = simplejson.loads(value)
+                flags |= stored_flags
+                if flags == google.appengine.api.memcache.TYPE_UNICODE:
+                    set_value = str(stored_value.encode('utf-8'))
+                else:
+                    set_value = stored_value
                 item = response.add_item()
-                flags = google.appengine.api.memcache.TYPE_STR
-                for rule in _rules:
-                    check, flag, exception = rule
-                    try:
-                        check(value)
-                        flags |= flag
-                    except exception:
-                        pass
-                item.set_flags(flags)
                 item.set_key(key)
-                item.set_value(value)
+                item.set_value(set_value)
+                item.set_flags(flags)
 
     def _Dynamic_Set(self, request, response):
         """Implementation of MemcacheService::Set().
@@ -95,16 +91,23 @@ class MemcacheServiceStub(google.appengine.api.apiproxy_stub.APIProxyStub):
             set_policy = item.set_policy()
             old_entry = self._cache.get(key)
             set_status = MemcacheSetResponse.NOT_STORED
+            flags = item.flags()
+            if flags == google.appengine.api.memcache.TYPE_PICKLED:
+                value = unicode(cPickle.dumps(cPickle.loads(item.value())))
+            else:
+                value = item.value()
+            set_value = simplejson.dumps([flags, value])
+
             if ((set_policy == MemcacheSetRequest.SET) or
                 (set_policy == MemcacheSetRequest.ADD and old_entry is None) or
                 (set_policy == MemcacheSetRequest.REPLACE and
                  old_entry is not None)):
 
                 if (old_entry is None or set_policy == MemcacheSetRequest.SET):
-                    self._cache.set(key, item.value(), item.expiration_time())
+                    self._cache.set(key, set_value, item.expiration_time())
                     set_status = MemcacheSetResponse.STORED
                 elif (set_policy == MemcacheSetRequest.REPLACE):
-                    self._cache.replace(key, item.value())
+                    self._cache.replace(key, set_value)
 
             response.add_set_status(set_status)
 
@@ -135,10 +138,19 @@ class MemcacheServiceStub(google.appengine.api.apiproxy_stub.APIProxyStub):
             response: A MemcacheIncrementResponse.
         """
         key = request.key()
+        value = self._cache.get(key)
+        flags, stored_value = simplejson.loads(value)
+        if flags == google.appengine.api.memcache.TYPE_INT:
+            new_value = int(stored_value)
+        elif flags == google.appengine.api.memcache.TYPE_LONG:
+            new_value = long(stored_value)
         if request.direction() == MemcacheIncrementRequest.INCREMENT:
-            new_value = self._cache.incr(key, request.delta())
+            new_value += request.delta()
         elif request.direction() == MemcacheIncrementRequest.DECREMENT:
-            new_value = self._cache.decr(key, request.delta())
+            new_value -= request.delta()
+
+        new_stored_value = simplejson.dumps([flags, str(new_value)])
+        self._cache.set(key, new_stored_value)
 
         response.set_new_value(new_value)
 
