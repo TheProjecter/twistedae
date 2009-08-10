@@ -125,8 +125,13 @@ class MemcacheServiceStub(google.appengine.api.apiproxy_stub.APIProxyStub):
             request: A MemcacheIncrementRequest.
             response: A MemcacheIncrementResponse.
         """
+        key = request.key()
+        if request.direction() == MemcacheIncrementRequest.INCREMENT:
+            new_value = self._cache.incr(key, request.delta())
+        elif request.direction() == MemcacheIncrementRequest.DECREMENT:
+            new_value = self._cache.decr(key, request.delta())
 
-        raise NotImplementedError
+        response.set_new_value(new_value)
 
     def _Dynamic_FlushAll(self, request, response):
         """Implementation of MemcacheService::FlushAll().
