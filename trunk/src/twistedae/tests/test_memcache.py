@@ -45,11 +45,23 @@ class MemcacheTestCase(twisted.trial.unittest.TestCase):
             'memcache')
 
     def testAddingItem(self):
-        """Simple in-memory caching."""
+        """Adds items of different types."""
 
         foo = "bar"
         google.appengine.api.memcache.add('foo', foo)
         assert google.appengine.api.memcache.get('foo') == foo
+
+        items = [u'foo', 'bar', {1: 'one'}, 42L]
+        google.appengine.api.memcache.add('items', items)
+        assert google.appengine.api.memcache.get('items') == items
+
+        number = 10
+        google.appengine.api.memcache.add('number', number)
+        assert google.appengine.api.memcache.get('number') == number
+
+        yes = True
+        google.appengine.api.memcache.add('yes', yes)
+        assert google.appengine.api.memcache.get('yes') == yes
 
     def testDeletingItem(self):
         """Tries to set and delete a key and its value."""
@@ -74,7 +86,7 @@ class MemcacheTestCase(twisted.trial.unittest.TestCase):
 
         first = "Little pig, little pig, let me come in!"
         second = "Not by the hair on my chinny-chin-chin!"
-        google.appengine.api.memcache.add('first', first)
+        google.appengine.api.memcache.set('first', first)
         assert google.appengine.api.memcache.get('first') == first
         google.appengine.api.memcache.replace('first', second)
         assert google.appengine.api.memcache.get('first') == second

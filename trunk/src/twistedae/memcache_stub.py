@@ -15,6 +15,7 @@
 # limitations under the License.
 """Memcache integration."""
 
+import cPickle
 import google.appengine.api.apiproxy_stub
 import google.appengine.api.memcache.memcache_service_pb
 import pylibmc
@@ -28,6 +29,10 @@ MemcacheIncrementRequest = (google.appengine.api.memcache.memcache_service_pb.
 MemcacheDeleteResponse   = (google.appengine.api.memcache.memcache_service_pb.
                             MemcacheDeleteResponse)
 
+_rules = (
+    (cPickle.loads, google.appengine.api.memcache.TYPE_PICKLED, Exception),
+    (long, google.appengine.api.memcache.TYPE_LONG, ValueError)
+)
 
 class MemcacheServiceStub(google.appengine.api.apiproxy_stub.APIProxyStub):
     """Memcache service stub.
@@ -52,12 +57,21 @@ class MemcacheServiceStub(google.appengine.api.apiproxy_stub.APIProxyStub):
             response: A MemcacheGetResponse.
         """
         for key in set(request.key_list()):
-            item = response.add_item()
-            item.set_key(key)
             value = self._cache.get(key)
             if value is None:
-                response.Clear()
+                continue
             else:
+                item = response.add_item()
+                flags = google.appengine.api.memcache.TYPE_STR
+                for rule in _rules:
+                    check, flag, exception = rule
+                    try:
+                        check(value)
+                        flags |= flag
+                    except exception:
+                        pass
+                item.set_flags(flags)
+                item.set_key(key)
                 item.set_value(value)
 
     def _Dynamic_Set(self, request, response):
