@@ -62,7 +62,8 @@ setup(
         'setuptools',
         ],
     extras_require=dict(
-        mongo=['pymongo']
+        mongo=['pymongo'],
+        memcached=['simplejson']
     ),
     entry_points={
         'console_scripts': ['appserver = twistedae.appserver:main'],
