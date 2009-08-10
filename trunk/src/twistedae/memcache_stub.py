@@ -20,6 +20,9 @@ import google.appengine.api.apiproxy_stub
 import google.appengine.api.memcache.memcache_service_pb
 import pylibmc
 
+DEFAULT_ADDR = '127.0.0.1'
+DEFAULT_PORT = 11211
+
 MemcacheSetResponse      = (google.appengine.api.memcache.memcache_service_pb.
                             MemcacheSetResponse)
 MemcacheSetRequest       = (google.appengine.api.memcache.memcache_service_pb.
@@ -40,14 +43,20 @@ class MemcacheServiceStub(google.appengine.api.apiproxy_stub.APIProxyStub):
     This stub uses memcached to store data.
     """
 
-    def __init__(self, service_name='memcache'):
+    def __init__(self, config=None, service_name='memcache'):
         """Initializes memcache service stub.
 
         Args:
+            config: Dictionary containing configuration parameters.
             service_name: Service name expected for all calls.
         """
         super(MemcacheServiceStub, self).__init__(service_name)
-        self._cache = pylibmc.Client(["127.0.0.1:11211"])
+        if config is None:
+            config = dict(
+                addr=DEFAULT_ADDR,
+                port=DEFAULT_PORT,
+            )
+        self._cache = pylibmc.Client(['%(addr)s:%(port)i' % config])
 
     def _Dynamic_Get(self, request, response):
         """Implementation of MemcacheService::Get().
