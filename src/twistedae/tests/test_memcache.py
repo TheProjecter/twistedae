@@ -67,6 +67,15 @@ class MemcacheTestCase(twisted.trial.unittest.TestCase):
         google.appengine.api.memcache.add('yes', yes)
         assert google.appengine.api.memcache.get('yes') == yes
 
+        greeting = 'Hello'
+        google.appengine.api.memcache.set('greeting', greeting, namespace='me')
+        assert google.appengine.api.memcache.get('greeting') is None
+        assert (google.appengine.api.memcache.get('greeting', namespace='me') ==
+            greeting)
+        assert (google.appengine.api.memcache.get('greeting', namespace='no') is
+            None)
+
+
     def testDeletingItem(self):
         """Tries to set and delete a key and its value."""
 

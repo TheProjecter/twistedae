@@ -34,6 +34,14 @@ MemcacheDeleteResponse   = (google.appengine.api.memcache.memcache_service_pb.
                             MemcacheDeleteResponse)
 
 
+def getKey(key, namespace=None):
+    """Returns a key."""
+
+    if namespace:
+        key = '%(namespace)s.%(key)s' % locals()
+    return key
+
+
 class MemcacheServiceStub(google.appengine.api.apiproxy_stub.APIProxyStub):
     """Memcache service stub.
 
@@ -63,7 +71,7 @@ class MemcacheServiceStub(google.appengine.api.apiproxy_stub.APIProxyStub):
             response: A MemcacheGetResponse.
         """
         for key in set(request.key_list()):
-            value = self._cache.get(key)
+            value = self._cache.get(getKey(key, request.name_space()))
             if value is None:
                 continue
             else:
@@ -75,7 +83,7 @@ class MemcacheServiceStub(google.appengine.api.apiproxy_stub.APIProxyStub):
                 else:
                     set_value = stored_value
                 item = response.add_item()
-                item.set_key(key)
+                item.set_key(getKey(key, request.name_space()))
                 item.set_value(set_value)
                 item.set_flags(flags)
 
@@ -87,7 +95,7 @@ class MemcacheServiceStub(google.appengine.api.apiproxy_stub.APIProxyStub):
             response: A MemcacheSetResponse.
         """
         for item in request.item_list():
-            key = item.key()
+            key = getKey(item.key(), request.name_space())
             set_policy = item.set_policy()
             old_entry = self._cache.get(key)
             set_status = MemcacheSetResponse.NOT_STORED
@@ -119,7 +127,7 @@ class MemcacheServiceStub(google.appengine.api.apiproxy_stub.APIProxyStub):
             response: A MemcacheDeleteResponse.
         """
         for item in request.item_list():
-            key = item.key()
+            key = getKey(item.key(), request.name_space())
             entry = self._cache.get(key)
             delete_status = MemcacheDeleteResponse.DELETED
 
@@ -137,7 +145,7 @@ class MemcacheServiceStub(google.appengine.api.apiproxy_stub.APIProxyStub):
             request: A MemcacheIncrementRequest.
             response: A MemcacheIncrementResponse.
         """
-        key = request.key()
+        key = getKey(request.key(), request.name_space())
         value = self._cache.get(key)
         flags, stored_value = simplejson.loads(value)
         if flags == google.appengine.api.memcache.TYPE_INT:
