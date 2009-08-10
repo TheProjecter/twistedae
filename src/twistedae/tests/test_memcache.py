@@ -78,8 +78,27 @@ class MemcacheTestCase(twisted.trial.unittest.TestCase):
         bye = "Good bye!"
         google.appengine.api.memcache.add('bye', bye, 1)
         assert google.appengine.api.memcache.get('bye') == bye
-        time.sleep(1)
+        time.sleep(1.1)
         assert google.appengine.api.memcache.get('bye') == None
+
+    def testIncrementDecrement(self):
+        """Testing automatically incrementing and decrementing."""
+
+        google.appengine.api.memcache.set('counter', 0) 
+        assert google.appengine.api.memcache.get('counter') == 0
+        google.appengine.api.memcache.incr('counter')
+        assert google.appengine.api.memcache.get('counter') == 1
+        google.appengine.api.memcache.decr('counter')
+        assert google.appengine.api.memcache.get('counter') == 0
+
+    def testFlushAll(self):
+        """Flushes the whole cache."""
+
+        spam = "Hello, World!"
+        google.appengine.api.memcache.set('spam', spam)
+        assert google.appengine.api.memcache.get('spam') == spam
+        google.appengine.api.memcache.flush_all()
+        assert google.appengine.api.memcache.get('spam') == None
 
     def testReplaceItem(self):
         """Adds and replaces a cached item."""
@@ -90,12 +109,3 @@ class MemcacheTestCase(twisted.trial.unittest.TestCase):
         assert google.appengine.api.memcache.get('first') == first
         google.appengine.api.memcache.replace('first', second)
         assert google.appengine.api.memcache.get('first') == second
-
-    def testFlushAll(self):
-        """Flushes the whole cache."""
-
-        spam = "Hello, World!"
-        google.appengine.api.memcache.set('spam', spam)
-        assert google.appengine.api.memcache.get('spam') == spam
-        google.appengine.api.memcache.flush_all()
-        assert google.appengine.api.memcache.get('spam') == None
