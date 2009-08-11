@@ -6,7 +6,7 @@ These are the TODOs ordered by priority in each group:
 Features
 --------
 
- - Alternative implementations of mail, memcache and taskqueue services.
+ - Alternative implementation of the mail service.
  - Security and user service.
  - Better command line frontend for appserver script.
 
