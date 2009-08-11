@@ -94,6 +94,12 @@ class MemcacheTestCase(twisted.trial.unittest.TestCase):
         time.sleep(1.1)
         assert google.appengine.api.memcache.get('bye') == None
 
+    def testGetKey(self):
+        """Tries to obtain a key."""
+
+        assert twistedae.memcache_stub.getKey('bar') == 'bar'
+        assert twistedae.memcache_stub.getKey('b', namespace='a') == 'a.b'
+
     def testIncrementDecrement(self):
         """Testing automatically incrementing and decrementing."""
 
