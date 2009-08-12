@@ -26,6 +26,8 @@ import wsgiref.handlers
 
 NUM_SHARDS = 20
 
+GLOBAL = []
+
 
 class SimpleCounterShard(google.appengine.ext.db.Model):
     """Shards for the counter"""
@@ -87,6 +89,7 @@ class DemoRequestHandler(google.appengine.ext.webapp.RequestHandler):
         increment()
         count = get_count()
         notes = get_notes()
+        GLOBAL.append(count)
         now = datetime.datetime.utcnow()
         eta = now + datetime.timedelta(0, 10)
         google.appengine.api.labs.taskqueue.add(url='/makenote',
@@ -99,7 +102,7 @@ class DemoRequestHandler(google.appengine.ext.webapp.RequestHandler):
                                                 eta=eta,
                                                 payload="%i very delayed" %
                                                     count)
-        vars = dict(count=count, env=self.request, notes=notes)
+        vars = dict(count=count, env=self.request, notes=notes, debug=GLOBAL)
         output = google.appengine.ext.webapp.template.render('index.html', vars)
         self.response.out.write(output)
 
