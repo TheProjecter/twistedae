@@ -33,6 +33,7 @@ import twisted.web.resource
 import twisted.web.server
 import twisted.web.static
 import twisted.web.wsgi
+import wsgi
 
 # The default port
 PORT = 8080
@@ -77,9 +78,14 @@ twisted.python.hook.addPost(twisted.web.http.HTTPFactory,
 def getWSGIResource(name):
     """Returns a suitable WSGI resource."""
 
-    mod = __import__(name)
-    res = twisted.web.wsgi.WSGIResource(
-                        twisted.internet.reactor, _pool, getattr(mod, name))
+    # Twisted's WSGIResource gets the application object. But to faithfully
+    # reproduce the GAE environment we have to reload the application object
+    # within each response. Therefor we create our own WSGIResource which gets
+    # only the application's name and does the reload implicit.
+    res = wsgi.WSGIResource(twisted.internet.reactor, _pool, name)
+    #mod = __import__(name)
+    #res = twisted.web.wsgi.WSGIResource(
+    #                    twisted.internet.reactor, _pool, getattr(mod, name))
     return res
 
 
