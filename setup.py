@@ -59,6 +59,7 @@ setup(
     package_dir={'': 'src'},
     install_requires=[
         'Twisted',
+        'flup',
         'setuptools',
         ],
     extras_require=dict(
@@ -66,9 +67,8 @@ setup(
         memcached=['simplejson']
     ),
     entry_points={
-        'console_scripts': ['appserver = twistedae.appserver:main'],
-        'paste.app_factory': ['main = twistedae.appserver:app_factory'],
-        # TODO: We'll see if we want to use paste
+        'console_scripts': ['appserver = twistedae.appserver:main',
+                            'fcgiserver = twistedae.fcgiserver:main'],
     },
     zip_safe=False,
     )
