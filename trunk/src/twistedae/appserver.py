@@ -21,6 +21,7 @@ import google.appengine.api.memcache.memcache_stub
 import google.appengine.api.urlfetch_stub
 import google.appengine.tools.dev_appserver
 import logging
+import memcache_stub
 import mongodb.datastore_mongo_stub
 import os
 import sys
@@ -128,7 +129,7 @@ def setupMemcache():
     """Sets up memcache."""
 
     google.appengine.api.apiproxy_stub_map.apiproxy.RegisterStub('memcache',
-        google.appengine.api.memcache.memcache_stub.MemcacheServiceStub())
+        google.appengine.api.memcache_stub.MemcacheServiceStub())
 
 
 def setupTaskQueue(root_path='.'):
@@ -197,8 +198,3 @@ def main():
     # Serve our application
     twisted.internet.reactor.listenTCP(PORT, site)
     twisted.internet.reactor.run()
-
-
-# TODO: We'll see later whether we need paste or not
-def app_factory(global_config, **local_conf):
-    """Application factory for paste."""
