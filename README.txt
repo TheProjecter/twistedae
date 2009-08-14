@@ -1,17 +1,22 @@
-========================================
-twistedae - Google App Engine on Twisted
-========================================
+=====================================
+twistedae - Twisted Google App Engine
+=====================================
 
-The twistedae project aims at running the Google App Engine SDK on top of the
-Twisted framework. Concurrent request handling is just one of the benefits. It
-delivers the parts for building your own scalable app engine while staying
-compatible with Google's API. This allows the development of applications that
-can either run in your own or in Google's cloud.
+The twistedae project aims at providing a full-featured and productive stack to
+run GAE applications. It delivers the parts for building your own scalable App
+Engine while staying compatible with Google's API.
 
-At this point the project is a proof of concept. It basically replaces the
-SDK's BaseHTTPServer with twisted.web and includes 10gen's datastore stub for
-MongoDB. With twistedae it is totally unnecessary to patch the Google App
-Engine SDK.
+
+The Stack
+---------
+
+The default configuration installs the following services::
+
+  * mongoDB
+  * memcached
+  * nginx
+  * FastCGI
+  * supervisor
 
 
 Copyright and license
@@ -25,23 +30,27 @@ a copy of the License at
   http://www.apache.org/licenses/LICENSE-2.0
 
 
-Running the server out of the box
----------------------------------
+Running the cloud out of the box
+--------------------------------
 
-Build and run the server by typing the following commands::
+Build and the whole stack by typing the following commands::
 
   $ python bootstrap.py
   $ ./bin/buildout
 
-Run the application server::
+Run the supervisor daemon::
 
-  $ ./bin/appserver parts/demo/
+  $ ./bin/supervisord
 
-Alternatively you can use twistd to start the service::
+Start the nginx HTTP server::
 
-  $ ./bin/twistd -ny src/twistedae/service.py
+  $ ./bin/nginxctl start
 
-Then access the application using a web browser with the following URL::
+And than run the fcgiserver::
+
+  $ ./bin/fcgiserver
+
+You can access the application using a web browser with the following URL::
 
   http://localhost:8080/
 
@@ -49,14 +58,6 @@ Then access the application using a web browser with the following URL::
 Testing
 -------
 
-Run unit tests by typing::
+Run unit tests by typing (running supervisord required)::
 
   $ bin/trial twistedae
-
-
-Installing
-----------
-
-To install twistedae type::
-
-  $ python setup.py install
