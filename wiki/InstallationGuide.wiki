@@ -14,12 +14,19 @@ It is advisable to install twistedae into a [http://pypi.python.org/pypi/virtual
   $ svn checkout http://twistedae.googlecode.com/svn/trunk/ twistedae
   }}}
 
- * Build and run the application:
+ * Building the stack:
+
   {{{
-  $ cd twistedae
-  $ python bootstrap/bootstrap.py
+  $ python bootstrap.py
   $ ./bin/buildout
-  $ ./bin/appserver parts/demo
+  }}}
+
+ * Letting the cloud fly:
+
+  {{{
+  $ ./bin/supervisord
+  $ ./bin/nginxctl start
+  $ ./bin/fcgiserver
   }}}
 
  * Access the application using a web browser with the following URL: http://localhost:8080/
