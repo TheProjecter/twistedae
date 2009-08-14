@@ -15,14 +15,12 @@ It is advisable to install twistedae into a [http://pypi.python.org/pypi/virtual
   }}}
 
  * Building the stack:
-
   {{{
   $ python bootstrap.py
   $ ./bin/buildout
   }}}
 
  * Letting the cloud fly:
-
   {{{
   $ ./bin/supervisord
   $ ./bin/nginxctl start
