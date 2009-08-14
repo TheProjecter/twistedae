@@ -115,11 +115,11 @@ def setupDatastore(app_id, datastore, history, require_indexes, trusted):
     history_path = os.path.join(tmp_dir, history)
 
     # We use the SDK's file datastore implementation.
-    datastore = google.appengine.api.datastore_file_stub.DatastoreFileStub(
-        app_id, datastore_path, history_path, require_indexes=require_indexes,
-        trusted=trusted)
-    #datastore = mongodb.datastore_mongo_stub.DatastoreMongoStub(
-    #    app_id, datastore_path, history_path, require_indexes=require_indexes)
+    #datastore = google.appengine.api.datastore_file_stub.DatastoreFileStub(
+    #    app_id, datastore_path, history_path, require_indexes=require_indexes,
+    #    trusted=trusted)
+    datastore = mongodb.datastore_mongo_stub.DatastoreMongoStub(
+        app_id, datastore_path, history_path, require_indexes=require_indexes)
 
     google.appengine.api.apiproxy_stub_map.apiproxy.RegisterStub(
         'datastore_v3', datastore)
@@ -129,7 +129,7 @@ def setupMemcache():
     """Sets up memcache."""
 
     google.appengine.api.apiproxy_stub_map.apiproxy.RegisterStub('memcache',
-        google.appengine.api.memcache_stub.MemcacheServiceStub())
+        memcache_stub.MemcacheServiceStub())
 
 
 def setupTaskQueue(root_path='.'):
