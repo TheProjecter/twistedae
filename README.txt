@@ -10,7 +10,7 @@ Engine while staying compatible with Google's API.
 The Stack
 ---------
 
-The default configuration installs the following services::
+The default provides following services::
 
   * mongoDB
   * memcached
