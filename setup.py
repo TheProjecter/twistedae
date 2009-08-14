@@ -15,32 +15,27 @@
 # limitations under the License.
 """Setup script."""
 
-from ez_setup import use_setuptools
-use_setuptools()
-
 import os
-from setuptools import setup, find_packages
+import setuptools
 
 
 def read(*rnames):
     return open(os.path.join(*rnames)).read()
 
 
-setup(
+setuptools.setup(
     name='twistedae',
-    version='0.1.0a1',
+    version='0.1.0',
     author="Tobias Rodaebel",
     author_email="tobias dot rodaebel at googlemail dot com",
-    description="Google App Engine on Twisted.",
+    description="Twisted Google App Engine.",
     long_description=(
         read('README.txt')
-        + '\n\n' +
-        read('TODO.txt')
         + '\n\n' +
         read('CHANGES.txt')
         ),
     license="Apache License 2.0",
-    keywords="gae appengine twisted wsgi",
+    keywords="gae appengine twisted wsgi fastcgi",
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Environment :: Web Environment',
@@ -54,7 +49,7 @@ setup(
         'Topic :: Internet :: WWW/HTTP :: WSGI :: Server',
         ],
     url='',
-    packages=find_packages('src'),
+    packages=setuptools.find_packages('src'),
     include_package_data=True,
     package_dir={'': 'src'},
     install_requires=[
