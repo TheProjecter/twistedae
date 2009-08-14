@@ -14,13 +14,13 @@ It is advisable to install twistedae into a [http://pypi.python.org/pypi/virtual
   $ svn checkout http://twistedae.googlecode.com/svn/trunk/ twistedae
   }}}
 
- * Building the stack:
+ * Build the stack:
   {{{
   $ python bootstrap.py
   $ ./bin/buildout
   }}}
 
- * Letting the cloud fly:
+ * Let the cloud fly:
   {{{
   $ ./bin/supervisord
   $ ./bin/nginxctl start
