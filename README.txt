@@ -38,17 +38,9 @@ Build and the whole stack by typing the following commands::
   $ python bootstrap.py
   $ ./bin/buildout
 
-Run the supervisor daemon::
+Run the supervisor daemon, which starts and controls all services at once::
 
   $ ./bin/supervisord
-
-Start the nginx HTTP server::
-
-  $ ./bin/nginxctl start
-
-And than run the fcgiserver::
-
-  $ ./bin/fcgiserver
 
 You can access the application using a web browser with the following URL::
 
