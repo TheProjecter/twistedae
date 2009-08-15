@@ -23,8 +23,6 @@ It is advisable to install twistedae into a [http://pypi.python.org/pypi/virtual
  * Let the cloud fly:
   {{{
   $ ./bin/supervisord
-  $ ./bin/nginxctl start
-  $ ./bin/fcgiserver
   }}}
 
  * Access the application using a web browser with the following URL: http://localhost:8080/
