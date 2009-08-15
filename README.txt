@@ -10,7 +10,7 @@ Engine while staying compatible with Google's API.
 The Stack
 ---------
 
-The default provides following services::
+The default configuration is built upon following services::
 
   * mongoDB
   * memcached
@@ -35,6 +35,7 @@ Running the cloud out of the box
 
 Build and the whole stack by typing the following commands::
 
+  $ mkdir -p var/log
   $ python bootstrap.py
   $ ./bin/buildout
 
