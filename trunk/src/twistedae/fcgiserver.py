@@ -22,16 +22,9 @@ import sys
 import twistedae.appserver
 import flup.server.fcgi_fork
 
-# Load and apply configuration
-os.chdir(os.environ['APP_PATH'])
-sys.path.insert(0, os.environ['APP_PATH'])
-conf, matcher = google.appengine.tools.dev_appserver.LoadAppConfig('.', {})
-os.environ['APPLICATION_ID'] = conf.application
-twistedae.appserver.setupStubs(conf)
 
-
-def getWSGIApplication():
-    """ """
+def getWSGIApplication(conf):
+    """Returns a master WSGI application object."""
 
     apps = []
 
@@ -44,11 +37,29 @@ def getWSGIApplication():
                      if isinstance(getattr(mod, v),
                                    google.appengine.ext.webapp.WSGIApplication)]
 
-    return apps
+    master = google.appengine.ext.webapp.WSGIApplication([], debug=True)
+
+    for a in apps:
+        for k in ['_handler_map', '_pattern_map', '_url_mapping']:
+            o = getattr(master, k)
+            if isinstance(o, dict):
+                o.update(getattr(a, k))
+            elif isinstance(o, list):
+                o += getattr(a, k)
+
+    return master
 
 
 def main():
-    """The server main funtion."""
+    """Initializes the server."""
+
+    os.chdir(os.environ['APP_PATH'])
+    sys.path.insert(0, os.environ['APP_PATH'])
+    conf, matcher = google.appengine.tools.dev_appserver.LoadAppConfig('.', {})
+    os.environ['APPLICATION_ID'] = conf.application
+    twistedae.appserver.setupStubs(conf)
+
+    app = getWSGIApplication(conf)
 
     environ = dict(
         SERVER_NAME='WSGIServer',
@@ -62,18 +73,4 @@ def main():
         multiprocess=False
     )
 
-    apps = getWSGIApplication()
-
-    keys = ['_handler_map', '_pattern_map', '_url_mapping']
-
-    master = google.appengine.ext.webapp.WSGIApplication([], debug=True)
-
-    for a in apps:
-        for k in keys:
-            o = getattr(master, k)
-            if isinstance(o, dict):
-                o.update(getattr(a, k))
-            elif isinstance(o, list):
-                o += getattr(a, k)
-
-    flup.server.fcgi_fork.WSGIServer(master, **config).run()
+    flup.server.fcgi_fork.WSGIServer(app, **config).run()
