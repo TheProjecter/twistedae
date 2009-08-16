@@ -39,7 +39,6 @@ setuptools.setup(
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Environment :: Web Environment',
-        'Framework :: Twisted',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: Apache Software License',
         'Natural Language :: English',
@@ -53,7 +52,6 @@ setuptools.setup(
     include_package_data=True,
     package_dir={'': 'src'},
     install_requires=[
-        'Twisted',
         'flup',
         'setuptools',
         ],
@@ -61,9 +59,5 @@ setuptools.setup(
         mongo=['pymongo'],
         memcached=['pylibmc', 'simplejson']
     ),
-    entry_points={
-        'console_scripts': ['appserver = twistedae.appserver:main',
-                            'fcgiserver = twistedae.fcgiserver:main'],
-    },
     zip_safe=False,
     )
