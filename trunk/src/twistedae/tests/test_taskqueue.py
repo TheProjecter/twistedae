@@ -20,7 +20,7 @@ import google.appengine.api.apiproxy_stub_map
 import google.appengine.api.labs.taskqueue
 import os
 import twistedae.taskqueue_stub
-import twisted.trial.unittest
+import unittest
 
 
 class DummyURLFetchServiceStub(google.appengine.api.apiproxy_stub.APIProxyStub):
@@ -31,7 +31,7 @@ class DummyURLFetchServiceStub(google.appengine.api.apiproxy_stub.APIProxyStub):
         response.set_statuscode(500)
 
 
-class TaskQueueTestCase(twisted.trial.unittest.TestCase):
+class TaskQueueTestCase(unittest.TestCase):
     """Testing the twistedae task queue."""
 
     def setUp(self):
@@ -46,7 +46,6 @@ class TaskQueueTestCase(twisted.trial.unittest.TestCase):
             'taskqueue', taskqueue)
 
         # Uncomment to run tests against the SDK's default service stub
-        #
         #taskqueue = (google.appengine.api.labs.taskqueue.taskqueue_stub.
         #             TaskQueueServiceStub(root_path=os.path.dirname(__file__)))
         #google.appengine.api.apiproxy_stub_map.apiproxy.RegisterStub(

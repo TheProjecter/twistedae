@@ -34,13 +34,13 @@ priority = 20
 redirect_stderr = true
 stdout_logfile = ${buildout:directory}/var/log/mongod.log
 
-[program:fcgiserver]
-command = ${buildout:directory}/bin/fcgiserver 
-process_name = fcgiserver
+[program:appserver]
+command = ${buildout:directory}/bin/appserver 
+process_name = appserver
 directory = ${buildout:directory}
 priority = 30
 redirect_stderr = true
-stdout_logfile = ${buildout:directory}/var/log/fcgiserver.log
+stdout_logfile = ${buildout:directory}/var/log/appserver.log
 
 [program:nginx]
 command = ${buildout:directory}/parts/nginx/sbin/nginx -c ${buildout:directory}/parts/nginxctl/nginxctl.conf

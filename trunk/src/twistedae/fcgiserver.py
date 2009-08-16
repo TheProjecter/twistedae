@@ -19,7 +19,7 @@ import google.appengine.tools.dev_appserver
 import logging
 import os
 import sys
-import twistedae.appserver
+import twistedae
 import flup.server.fcgi_fork
 
 
@@ -53,11 +53,18 @@ def getWSGIApplication(conf):
 def main():
     """Initializes the server."""
 
-    os.chdir(os.environ['APP_PATH'])
-    sys.path.insert(0, os.environ['APP_PATH'])
+    logging.basicConfig(
+        format='%(levelname)-8s %(asctime)s %(filename)s:%(lineno)s] '
+               '%(message)s',
+        level=logging.DEBUG)
+
+    app_root = os.environ['APP_ROOT']
+    os.chdir(app_root)
+    sys.path.append(app_root)
+
     conf, matcher = google.appengine.tools.dev_appserver.LoadAppConfig('.', {})
     os.environ['APPLICATION_ID'] = conf.application
-    twistedae.appserver.setupStubs(conf)
+    twistedae.setupStubs(conf)
 
     app = getWSGIApplication(conf)
 
@@ -72,5 +79,7 @@ def main():
         bindAddress=('127.0.0.1', 8081),
         multiprocess=False
     )
+
+    logging.info("Server starting")
 
     flup.server.fcgi_fork.WSGIServer(app, **config).run()

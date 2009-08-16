@@ -53,4 +53,4 @@ Testing
 
 Run unit tests by typing (running supervisord required)::
 
-  $ bin/trial twistedae
+  $ bin/nosetests
