@@ -17,6 +17,7 @@
 
 import google.appengine.api.apiproxy_stub_map
 import google.appengine.api.datastore_file_stub
+import google.appengine.api.mail_stub
 import google.appengine.api.memcache.memcache_stub
 import google.appengine.api.urlfetch_stub
 import google.appengine.tools.dev_appserver
@@ -125,6 +126,16 @@ def setupDatastore(app_id, datastore, history, require_indexes, trusted):
         'datastore_v3', datastore)
 
 
+def setupMail(smtp_host, smtp_port, smtp_user, smtp_password,
+              enable_sendmail=False, show_mail_body=False):
+    """Sets up mail."""
+
+    google.appengine.api.apiproxy_stub_map.apiproxy.RegisterStub('mail',
+        google.appengine.api.mail_stub.MailServiceStub(
+            smtp_host, smtp_port, smtp_user, smtp_password,
+            enable_sendmail=enable_sendmail, show_mail_body=show_mail_body))
+
+
 def setupMemcache():
     """Sets up memcache."""
 
@@ -157,6 +168,8 @@ def setupStubs(conf):
                    'dev_appserver.datastore.history',
                    False, False)
  
+    setupMail('localhost', 25, '', '')
+
     setupMemcache()
 
     setupTaskQueue()
