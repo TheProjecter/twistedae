@@ -35,7 +35,6 @@ Running the cloud out of the box
 
 Build and the whole stack by typing the following commands::
 
-  $ mkdir -p var/log
   $ python bootstrap.py
   $ ./bin/buildout
 
