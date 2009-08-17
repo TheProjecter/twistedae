@@ -47,7 +47,7 @@ setuptools.setup(
         'Topic :: Internet :: WWW/HTTP',
         'Topic :: Internet :: WWW/HTTP :: WSGI :: Server',
         ],
-    url='',
+    url='http://code.google.com/p/twistedae',
     packages=setuptools.find_packages('src'),
     include_package_data=True,
     package_dir={'': 'src'},
