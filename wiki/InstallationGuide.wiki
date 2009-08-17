@@ -26,3 +26,8 @@ It is advisable to install twistedae into a [http://pypi.python.org/pypi/virtual
   }}}
 
  * Access the application using a web browser with the following URL: http://localhost:8080/
+
+ * Run the supervisor console:
+  {{{
+  $ ./bin/supervisorctl -c etc/supervisord.conf -u admin -p admin
+  }}}
