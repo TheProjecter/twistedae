@@ -22,7 +22,6 @@ It is advisable to install twistedae into a [http://pypi.python.org/pypi/virtual
 
  * Let the cloud fly:
   {{{
-  $ mkdir -p var/log
   $ ./bin/supervisord
   }}}
 
