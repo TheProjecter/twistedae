@@ -82,3 +82,6 @@ ws.require('zc.buildout' + VERSION)
 import zc.buildout.buildout
 zc.buildout.buildout.main(args)
 shutil.rmtree(tmpeggs)
+
+if not os.path.isdir('var'):
+    os.makedirs(os.path.join('var', 'log'))
