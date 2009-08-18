@@ -15,39 +15,11 @@
 # limitations under the License.
 """Simple FastCGI server implementation."""
 
-import google.appengine.tools.dev_appserver
 import logging
 import optparse
 import os
 import sys
 import twistedae
-
-
-def getWSGIApplication(conf):
-    """Returns a master WSGI application object."""
-
-    apps = []
-
-    for handler in conf.handlers:
-        script = handler.script
-        if script != None:
-            base, ext = os.path.splitext(os.path.basename(script))
-            mod = __import__(base)
-            apps += [getattr(mod, v) for v in mod.__dict__
-                     if isinstance(getattr(mod, v),
-                                   google.appengine.ext.webapp.WSGIApplication)]
-
-    master = google.appengine.ext.webapp.WSGIApplication([], debug=True)
-
-    for a in apps:
-        for k in ['_handler_map', '_pattern_map', '_url_mapping']:
-            o = getattr(master, k)
-            if isinstance(o, dict):
-                o.update(getattr(a, k))
-            elif isinstance(o, list):
-                o += getattr(a, k)
-
-    return master
 
 
 def main():
@@ -70,11 +42,11 @@ def main():
     os.chdir(app_root)
     sys.path.append(app_root)
 
-    conf, matcher = google.appengine.tools.dev_appserver.LoadAppConfig('.', {})
+    conf = twistedae.getAppConfig()
     os.environ['APPLICATION_ID'] = conf.application
     twistedae.setupStubs(conf)
 
-    app = getWSGIApplication(conf)
+    app = twistedae.getWSGIApplication(conf)
 
     environ = dict(
         SERVER_NAME='WSGIServer',
