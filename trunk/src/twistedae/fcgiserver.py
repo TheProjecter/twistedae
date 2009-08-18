@@ -17,10 +17,10 @@
 
 import google.appengine.tools.dev_appserver
 import logging
+import optparse
 import os
 import sys
 import twistedae
-import flup.server.fcgi_fork
 
 
 def getWSGIApplication(conf):
@@ -53,6 +53,14 @@ def getWSGIApplication(conf):
 def main():
     """Initializes the server."""
 
+    usage = "usage: %prog [options]"
+    op = optparse.OptionParser(usage=usage)
+    op.add_option("-d", "--debug", action="store_true", dest="debug",
+                  help="runs a single fcgi server process in debug mode",
+                  default=False)
+
+    (options, args) = op.parse_args()
+
     logging.basicConfig(
         format='%(levelname)-8s %(asctime)s %(filename)s:%(lineno)s] '
                '%(message)s',
@@ -82,4 +90,11 @@ def main():
 
     logging.info("Server starting")
 
-    flup.server.fcgi_fork.WSGIServer(app, **config).run()
+    if not options.debug:
+        import flup.server.fcgi_fork
+        server_module = flup.server.fcgi_fork
+    else:
+        import flup.server.fcgi_single
+        server_module = flup.server.fcgi_single
+
+    server_module.WSGIServer(app, **config).run()
