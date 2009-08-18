@@ -8,6 +8,9 @@ handlers:
 - url: /
   script: app.py
 
+- url: /makenote
+  script: app.py
+
 - url: /dummy
   script: dummy.py
 
