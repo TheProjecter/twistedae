@@ -51,6 +51,9 @@ setuptools.setup(
     packages=setuptools.find_packages('src'),
     include_package_data=True,
     package_dir={'': 'src'},
+    entry_points = {
+        'console_scripts': ['apptool = twistedae.apptool:main'],
+        },
     install_requires=[
         'flup',
         'setuptools',
@@ -58,6 +61,6 @@ setuptools.setup(
     extras_require=dict(
         mongo=['pymongo'],
         memcached=['pylibmc', 'simplejson']
-    ),
+        ),
     zip_safe=False,
     )

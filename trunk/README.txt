@@ -38,6 +38,10 @@ Build and the whole stack by typing the following commands::
   $ python bootstrap.py
   $ ./bin/buildout
 
+Configure the demo application::
+
+  $ ./bin/apptool parts/demo/
+
 Run the supervisor daemon, which starts and controls all services at once::
 
   $ ./bin/supervisord
