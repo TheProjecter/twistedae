@@ -21,7 +21,7 @@ import re
 import sys
 import twistedae 
 
-DESCRIPTION = ("Console script to perform common tasks on configuring an"
+DESCRIPTION = ("Console script to perform common tasks on configuring an "
                "application.")
 
 USAGE = "usage: %prog [options] <application root>"
