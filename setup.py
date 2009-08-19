@@ -51,9 +51,6 @@ setuptools.setup(
     packages=setuptools.find_packages('src'),
     include_package_data=True,
     package_dir={'': 'src'},
-    entry_points = {
-        'console_scripts': ['apptool = twistedae.apptool:main'],
-        },
     install_requires=[
         'flup',
         'setuptools',
