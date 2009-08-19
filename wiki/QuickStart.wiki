@@ -20,6 +20,11 @@ It is advisable to install twistedae into a [http://pypi.python.org/pypi/virtual
   $ ./bin/buildout
   }}}
 
+ * Configure the demo application:
+  {{{
+  $ ./bin/apptool parts/demo/
+  }}}
+
  * Let the cloud fly:
   {{{
   $ ./bin/supervisord
