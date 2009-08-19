@@ -10,12 +10,12 @@
   <body>
     <h1>twistedae</h1>
     <div class="debug">{{ env }}</div>
-    <p>Sharded counter value: {{ count }}</p>
+    <p>Counter: {{ count }}</p>
+    <p>Executed tasks:</p>
     <select size="10" multiple>
     {% for note in notes %}
       <option>{{ note }}</option>
     {% endfor %}
     </select>
-    <div>{{ debug }}</div>
   </body>
 </html>
