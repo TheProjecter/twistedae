@@ -42,3 +42,12 @@ For building the NGINX HTTP server the [http://www.pcre.org PCRE library] is req
   {{{
   $ ./bin/supervisorctl -c etc/supervisord.conf -u admin -p admin
   }}}
+
+When all services are up and running, the supervisor console shows something
+like this:
+  {{{
+  appserver                        RUNNING    pid 91685, uptime 0:02:01
+  memcached                        RUNNING    pid 91683, uptime 0:02:01
+  mongod                           RUNNING    pid 91684, uptime 0:02:01
+  nginx                            RUNNING    pid 91686, uptime 0:02:01
+  }}}
