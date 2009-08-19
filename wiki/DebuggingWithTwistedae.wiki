@@ -1,0 +1,10 @@
+#summary Documentation on debuggung your application with twistedae.
+#labels Featured
+
+= Debugging your application =
+
+The appserver (FastCGI server) provides two different running modes:
+
+ * normal - multi-process daemon mode
+
+ * debug - the appserver runs as a single process in the foreground
