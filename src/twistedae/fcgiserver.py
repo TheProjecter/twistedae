@@ -46,6 +46,8 @@ def main():
     os.environ['APPLICATION_ID'] = conf.application
     twistedae.setupStubs(conf)
 
+    twistedae.setupRuntimeEnvironment(app_root)
+
     app = twistedae.getWSGIApplication(conf)
 
     environ = dict(

@@ -16,6 +16,7 @@
 """Helper functions for registering App Engine API proxy stubs."""
 
 import google.appengine.api.apiproxy_stub_map
+import google.appengine.api.appinfo
 import google.appengine.api.mail_stub
 import google.appengine.api.urlfetch_stub
 import google.appengine.ext.webapp
@@ -23,16 +24,76 @@ import google.appengine.tools.dev_appserver
 import memcache_stub
 import mongodb.datastore_mongo_stub
 import os
+import runpy
 import taskqueue_stub
 
 
 def getAppConfig(directory='.'):
     """Returns a configuration object."""
 
-    conf, matcher = google.appengine.tools.dev_appserver.LoadAppConfig(
-        directory, {})
+    path = os.path.join(directory, 'app.yaml')
+    conf_file = open(path, 'r')
+
+    try:
+        conf = google.appengine.api.appinfo.LoadSingleAppInfo(conf_file)
+    except IOError:
+        raise RuntimeError
+    finally:
+        conf_file.close()
 
     return conf
+
+
+_MODULE_CACHE = {}
+
+_RESTRICTED_NAMES = {
+    'open': google.appengine.tools.dev_appserver.FakeFile
+}
+
+
+def getWSGIApplication(conf):
+    """Returns a master WSGI application object."""
+
+    apps = []
+
+    for handler in conf.handlers:
+        script = handler.script
+        if script != None:
+            base, ext = os.path.splitext(os.path.basename(script))
+
+            if base in _MODULE_CACHE:
+                mod = _MODULE_CACHE[base]
+            else:
+                mod = runpy.run_module(
+                    base,
+                    init_globals=_RESTRICTED_NAMES,
+                    run_name=None,
+                    alter_sys=False)
+
+                _MODULE_CACHE[base] = mod
+
+            app_class = google.appengine.ext.webapp.WSGIApplication
+            apps += [mod[v] for v in mod if isinstance(mod[v], app_class)]
+
+    master = google.appengine.ext.webapp.WSGIApplication([], debug=True)
+
+    for a in apps:
+        for k in ['_handler_map', '_pattern_map', '_url_mapping']:
+            o = getattr(master, k)
+            if isinstance(o, dict):
+                o.update(getattr(a, k))
+            elif isinstance(o, list):
+                o += getattr(a, k)
+
+    return master
+
+
+def setupRuntimeEnvironment(app_root):
+    """Sets up the python runtime environment."""
+
+    google.appengine.tools.dev_appserver.FakeFile.SetAllowedPaths(
+        app_root, [])
+    google.appengine.tools.dev_appserver.FakeFile.SetAllowSkippedFiles(False)
 
 
 def setupDatastore(app_id, datastore, history, require_indexes, trusted):
@@ -102,29 +163,3 @@ def setupStubs(conf):
 
     setupURLFetchStub()
 
-
-def getWSGIApplication(conf):
-    """Returns a master WSGI application object."""
-
-    apps = []
-
-    for handler in conf.handlers:
-        script = handler.script
-        if script != None:
-            base, ext = os.path.splitext(os.path.basename(script))
-            mod = __import__(base)
-            apps += [getattr(mod, v) for v in mod.__dict__
-                     if isinstance(getattr(mod, v),
-                                   google.appengine.ext.webapp.WSGIApplication)]
-
-    master = google.appengine.ext.webapp.WSGIApplication([], debug=True)
-
-    for a in apps:
-        for k in ['_handler_map', '_pattern_map', '_url_mapping']:
-            o = getattr(master, k)
-            if isinstance(o, dict):
-                o.update(getattr(a, k))
-            elif isinstance(o, list):
-                o += getattr(a, k)
-
-    return master
