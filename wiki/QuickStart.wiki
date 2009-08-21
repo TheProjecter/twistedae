@@ -23,8 +23,7 @@ You don't have to install the Google App Engine SDK, because
 == Other requirements ==
 
 Most of the required libraries and programs will be installed by zc.buildout.
-See the [http://code.google.com/p/twistedae/source/browse/trunk/buildout.cfg
-buildout.cfg] file.
+See the [http://code.google.com/p/twistedae/source/browse/trunk/buildout.cfg buildout.cfg] file.
 
 The buildout needs Python and the tools contained in /bin and /usr/bin of a
 standard installation of the Linux operating environment. You should ensure
