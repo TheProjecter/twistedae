@@ -59,6 +59,7 @@ _RESTRICTED_NAMES = {
 }
 
 _RESTRICTED_MODULES = {
+    '__builtin__': None,
     'cPickle': pickle.__dict__,
     'ftplib': None,
     'imp': None,
