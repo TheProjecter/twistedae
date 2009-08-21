@@ -18,6 +18,7 @@
 import cPickle
 import google.appengine.api.apiproxy_stub
 import google.appengine.api.memcache.memcache_service_pb
+import os
 import pylibmc
 import simplejson
 
@@ -37,9 +38,12 @@ MemcacheDeleteResponse   = (google.appengine.api.memcache.memcache_service_pb.
 def getKey(key, namespace=None):
     """Returns a key."""
 
+    app_id = os.environ.get('APPLICATION_ID', '')
+    if app_id: app_id += '.'
+
     if namespace:
         key = '%(namespace)s.%(key)s' % locals()
-    return key
+    return '%(app_id)s%(key)s' % locals()
 
 
 class MemcacheServiceStub(google.appengine.api.apiproxy_stub.APIProxyStub):

@@ -17,6 +17,7 @@
 
 import google.appengine.api.apiproxy_stub_map
 import google.appengine.api.memcache.memcache_stub
+import os
 import time
 import twistedae.memcache_stub
 import unittest
@@ -97,6 +98,11 @@ class MemcacheTestCase(unittest.TestCase):
 
         assert twistedae.memcache_stub.getKey('bar') == 'bar'
         assert twistedae.memcache_stub.getKey('b', namespace='a') == 'a.b'
+        os.environ['APPLICATION_ID'] = 'app'
+        assert twistedae.memcache_stub.getKey('b', namespace='a') == 'app.a.b'
+        del os.environ['APPLICATION_ID']
+        google.appengine.api.memcache.set('counter', 0, namespace='me') 
+        assert google.appengine.api.memcache.get('counter', namespace='me') == 0
 
     def testIncrementDecrement(self):
         """Testing automatically incrementing and decrementing."""
