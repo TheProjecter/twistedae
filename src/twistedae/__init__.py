@@ -15,16 +15,21 @@
 # limitations under the License.
 """Helper functions for registering App Engine API proxy stubs."""
 
+import StringIO
 import google.appengine.api.apiproxy_stub_map
 import google.appengine.api.appinfo
 import google.appengine.api.mail_stub
 import google.appengine.api.urlfetch_stub
 import google.appengine.ext.webapp
 import google.appengine.tools.dev_appserver
+import imp
 import memcache_stub
+import mimetypes
 import mongodb.datastore_mongo_stub
 import os
+import pickle
 import runpy
+import sys
 import taskqueue_stub
 
 
@@ -46,15 +51,56 @@ def getAppConfig(directory='.'):
 
 _MODULE_CACHE = {}
 
+# See http://code.google.com/appengine/docs/python/runtime.html#Pure_Python for
+# more information on restrictions in the GAE Python runtime environment.
+
 _RESTRICTED_NAMES = {
-    'open': google.appengine.tools.dev_appserver.FakeFile
+    'open': None,
 }
 
+_RESTRICTED_MODULES = {
+    'cPickle': pickle.__dict__,
+    'ftplib': None,
+    'imp': None,
+    'select': None,
+    'socket': None,
+    'tempfile': {'TemporaryFile': StringIO.StringIO},
+    'marshal': None,
+    'os': {'environ': os.environ,
+           'path': os.path
+           },
+    }
 
-def getWSGIApplication(conf):
+
+class RestrictedImportHook(object):
+    _restricted = set()
+
+    @classmethod
+    def add(cls, fullname):
+        cls._restricted.add(fullname)
+
+    def find_module(self, fullname, path=None):
+        if path: return
+        if fullname in self._restricted:
+            return self
+
+    def load_module(self, fullname):
+        new_module = imp.new_module(fullname)
+        new_module.__dict__.update(_RESTRICTED_MODULES[fullname] or dict())
+        return new_module
+
+
+
+def getWSGIApplication(conf, unrestricted=False):
     """Returns a master WSGI application object."""
 
     apps = []
+
+    if not unrestricted:
+        [RestrictedImportHook.add(m) for m in _RESTRICTED_MODULES]
+        restricted_names = _RESTRICTED_NAMES
+    else:
+        restricted_names = dict()
 
     for handler in conf.handlers:
         script = handler.script
@@ -64,11 +110,22 @@ def getWSGIApplication(conf):
             if base in _MODULE_CACHE:
                 mod = _MODULE_CACHE[base]
             else:
-                mod = runpy.run_module(
-                    base,
-                    init_globals=_RESTRICTED_NAMES,
-                    run_name=None,
-                    alter_sys=False)
+                sys.meta_path = [RestrictedImportHook()]
+                modules = sys.modules
+                for m in _RESTRICTED_MODULES:
+                    if m in sys.modules:
+                        del sys.modules[m]
+                if hasattr(sys, 'path_importer_cache'):
+                    sys.path_importer_cache.clear()
+
+                try:
+                    mod = runpy.run_module(
+                        base,
+                        init_globals=restricted_names,
+                        run_name=None)
+                finally:
+                    sys.meta_path = []
+                    sys.modules = modules
 
                 _MODULE_CACHE[base] = mod
 
@@ -90,10 +147,6 @@ def getWSGIApplication(conf):
 
 def setupRuntimeEnvironment(app_root):
     """Sets up the python runtime environment."""
-
-    google.appengine.tools.dev_appserver.FakeFile.SetAllowedPaths(
-        app_root, [])
-    google.appengine.tools.dev_appserver.FakeFile.SetAllowSkippedFiles(False)
 
 
 def setupDatastore(app_id, datastore, history, require_indexes, trusted):

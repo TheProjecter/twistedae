@@ -28,7 +28,10 @@ def main():
     usage = "usage: %prog [options]"
     op = optparse.OptionParser(usage=usage)
     op.add_option("-d", "--debug", action="store_true", dest="debug",
-                  help="runs a single fcgi server process in debug mode",
+                  help="run a single fcgi server process in debug mode",
+                  default=False)
+    op.add_option("--unrestricted", action="store_true", dest="unrestricted",
+                  help="run the server without GAE restrictions",
                   default=False)
 
     (options, args) = op.parse_args()
@@ -48,7 +51,7 @@ def main():
 
     twistedae.setupRuntimeEnvironment(app_root)
 
-    app = twistedae.getWSGIApplication(conf)
+    app = twistedae.getWSGIApplication(conf, options.unrestricted)
 
     environ = dict(
         SERVER_NAME='WSGIServer',
