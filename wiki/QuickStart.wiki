@@ -11,7 +11,7 @@ It is advisable to install twistedae into a [http://pypi.python.org/pypi/virtual
 
 == Other requirements ==
 
-For building the NGINX HTTP server the [http://www.pcre.org PCRE library] is required. 
+Most of the required libraries and programs will be installed by zc.buildout. See the [http://code.google.com/p/twistedae/source/browse/trunk/buildout.cfg buildout.cfg] file for further information.
 
 = Installation =
 
