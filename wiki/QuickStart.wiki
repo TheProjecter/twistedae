@@ -6,22 +6,19 @@
 == Python interpreter ==
 
 It is possible to run twistedae's Python parts with Python 2.5.x and 2.6.x, but
-is recommended to use a version which is supported by the Google App Engine
+it is recommended to use a version which is supported by the Google App Engine
 SDK. See http://code.google.com/intl/de/appengine/docs/python/overview.html for
 further information.
-
-== Google App Engine SDK ==
-
-You don't have to install the Google App Engine SDK, because
-[http://pypi.python.org/pypi/zc.buildout zc.buildout] will install it for you.
-Only the Python interpreter is needed. See
-http://code.google.com/intl/de/appengine/docs/python/overview.html which Python
-version is supported by the Google App Engine SDK.
 
 It is advisable to install twistedae into a
 [http://pypi.python.org/pypi/virtualenv virtualenv] in order to obtain
 isolation from any “system” packages you’ve got installed in your Python
 version.
+
+== Google App Engine SDK ==
+
+You don't have to install the Google App Engine SDK, because
+[http://pypi.python.org/pypi/zc.buildout zc.buildout] will install it for you.
 
 == Other requirements ==
 
