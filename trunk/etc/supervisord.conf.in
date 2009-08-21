@@ -47,4 +47,5 @@ command = ${buildout:directory}/parts/nginx/sbin/nginx -c ${buildout:directory}/
 process_name = nginx
 directory = ${buildout:directory}/parts/nginx/sbin
 priority = 40
+environment = LD_LIBRARY_PATH=${buildout:directory}/parts/pcre/lib
 redirect_stderr = true
