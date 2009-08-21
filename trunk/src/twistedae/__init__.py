@@ -16,6 +16,7 @@
 """Helper functions for registering App Engine API proxy stubs."""
 
 import StringIO
+import errno
 import google.appengine.api.apiproxy_stub_map
 import google.appengine.api.appinfo
 import google.appengine.api.mail_stub
@@ -49,17 +50,48 @@ def getAppConfig(directory='.'):
     return conf
 
 
+class NotImplementedClass(object):
+    """Provided by classes not implemented in the restricted environment."""
+
+    @staticmethod
+    def _raise(*args, **kw):
+        raise NotImplementedError('This class/method is not available.')
+
+    __init__ = _raise
+
+
+def RestrictedOpen(filename, flags, mode=0777):
+  """Restricted implementation of os.open."""
+
+  raise OSError(errno.EPERM, "Operation not permitted", filename)
+
+
+class RestrictedFile(file):
+    """Restricted file class which provides read-only access."""
+
+    _ALLOWED_MODES = frozenset(['r', 'rb', 'U', 'rU'])
+
+    def __init__(self, filename, mode='r', bufsize=-1, **kw):
+        if mode not in RestrictedFile._ALLOWED_MODES:
+            raise IOError('invalid mode: %s' % mode)
+
+        super(RestrictedFile, self).__init__(filename, mode, bufsize, **kw)
+
+
 _MODULE_CACHE = {}
 
 # See http://code.google.com/appengine/docs/python/runtime.html#Pure_Python for
 # more information on restrictions in the GAE Python runtime environment.
 
 _RESTRICTED_NAMES = {
-    'open': None,
+    'open': RestrictedOpen,
 }
 
 _RESTRICTED_MODULES = {
-    '__builtin__': None,
+    '__builtin__': {'buffer': NotImplementedClass,
+                    'file': RestrictedFile,
+                    'open': RestrictedOpen
+                    },
     'cPickle': pickle.__dict__,
     'ftplib': None,
     'imp': None,
@@ -89,7 +121,6 @@ class RestrictedImportHook(object):
         new_module = imp.new_module(fullname)
         new_module.__dict__.update(_RESTRICTED_MODULES[fullname] or dict())
         return new_module
-
 
 
 def getWSGIApplication(conf, unrestricted=False):
@@ -216,4 +247,3 @@ def setupStubs(conf):
     setupTaskQueue()
 
     setupURLFetchStub()
-
