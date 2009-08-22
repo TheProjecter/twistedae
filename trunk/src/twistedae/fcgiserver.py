@@ -46,7 +46,6 @@ def main():
     sys.path.append(app_root)
 
     conf = twistedae.getAppConfig()
-    os.environ['APPLICATION_ID'] = conf.application
     twistedae.setupStubs(conf)
 
     twistedae.setupRuntimeEnvironment(app_root)
@@ -54,9 +53,13 @@ def main():
     app = twistedae.getWSGIApplication(conf, options.unrestricted)
 
     environ = dict(
-        SERVER_NAME='WSGIServer',
-        SERVER_PORT='8081',
-        SERVER_PROTOCOL='wsgi'
+        APPLICATION_ID=conf.application,
+        PATH_TRANSLATED='unknown',
+        SERVER_NAME='twistedae',
+        SERVER_PORT='8080',
+        SERVER_PROTOCOL='HTTP/1.1',
+        SERVER_SOFTWARE='twistedae',
+        USER=os.getlogin(),
     )
 
     config = dict(

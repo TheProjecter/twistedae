@@ -123,6 +123,35 @@ class RestrictedImportHook(object):
         return new_module
 
 
+class WSGIApplication(google.appengine.ext.webapp.WSGIApplication):
+    """The WSGI application."""
+
+    def __init__(self, debug=True):
+        super(WSGIApplication, self).__init__([], debug)
+
+    def __call__(self, environ, response):
+        """Returns the output of all handlers.
+
+        We have to adjust os.environ in same way GAE does. Namely, it must
+        provide the request parameters.
+        """
+
+        orig_env = dict(os.environ)
+        os.environ.clear()
+        app_env = dict(environ)
+        for key in ('wsgi.errors', 'wsgi.input', 'wsgi.multiprocess',
+                    'wsgi.multithread', 'wsgi.run_once', 'wsgi.url_scheme',
+                    'wsgi.version'):
+            del app_env[key]
+        os.environ.update(app_env)
+        try:
+            result = super(WSGIApplication, self).__call__(environ, response)
+        finally:
+            os.environ.clear()
+            os.environ.update(orig_env)
+        return result or ['']
+
+
 def getWSGIApplication(conf, unrestricted=False):
     """Returns a master WSGI application object."""
 
@@ -164,17 +193,17 @@ def getWSGIApplication(conf, unrestricted=False):
             app_class = google.appengine.ext.webapp.WSGIApplication
             apps += [mod[v] for v in mod if isinstance(mod[v], app_class)]
 
-    master = google.appengine.ext.webapp.WSGIApplication([], debug=True)
+    app = WSGIApplication()
 
     for a in apps:
         for k in ['_handler_map', '_pattern_map', '_url_mapping']:
-            o = getattr(master, k)
+            o = getattr(app, k)
             if isinstance(o, dict):
                 o.update(getattr(a, k))
             elif isinstance(o, list):
                 o += getattr(a, k)
 
-    return master
+    return app
 
 
 def setupRuntimeEnvironment(app_root):
