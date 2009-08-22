@@ -21,6 +21,7 @@ import google.appengine.api.memcache
 import google.appengine.ext.db
 import google.appengine.ext.webapp
 import google.appengine.ext.webapp.template
+import os
 import random
 import wsgiref.handlers
 
@@ -95,7 +96,7 @@ class DemoRequestHandler(google.appengine.ext.webapp.RequestHandler):
         google.appengine.api.labs.taskqueue.add(url='/makenote',
                                                 eta=eta,
                                                 payload="%i delayed" % count)
-        vars = dict(count=count, env=self.request, notes=notes, debug=GLOBAL)
+        vars = dict(count=count, env=os.environ, notes=notes, debug=GLOBAL)
         output = google.appengine.ext.webapp.template.render('index.html', vars)
         self.response.out.write(output)
 
