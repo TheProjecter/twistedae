@@ -55,7 +55,7 @@ def main():
 
     environ = dict(
         SERVER_NAME='WSGIServer',
-        SERVER_PORT=8081,
+        SERVER_PORT='8081',
         SERVER_PROTOCOL='wsgi'
     )
 
