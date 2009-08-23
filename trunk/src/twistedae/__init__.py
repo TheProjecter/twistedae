@@ -106,6 +106,8 @@ _RESTRICTED_MODULES = {
 
 
 class RestrictedImportHook(object):
+    """Import hook to replace registered modules with restricted variants."""
+    
     _restricted = set()
 
     @classmethod
@@ -121,6 +123,25 @@ class RestrictedImportHook(object):
         new_module = imp.new_module(fullname)
         new_module.__dict__.update(_RESTRICTED_MODULES[fullname] or dict())
         return new_module
+
+
+class DisallowExtensionsImportHook(object):
+    """Simple import hook to disallow import of C extensions."""
+
+    def find_module(self, fullname, path=None):
+        if path:
+            parts = fullname.split('.')
+            submodule = parts.pop()
+            try:
+                result = imp.find_module(submodule, path)
+            except ImportError:
+                pass
+            else:
+                source_file, pathname, description = result
+                suffix, mode, file_type = description
+                if file_type == imp.C_EXTENSION:
+                    raise ImportError
+        return
 
 
 class WSGIApplication(google.appengine.ext.webapp.WSGIApplication):
@@ -160,6 +181,8 @@ def getWSGIApplication(conf, unrestricted=False):
     if not unrestricted:
         [RestrictedImportHook.add(m) for m in _RESTRICTED_MODULES]
         restricted_names = _RESTRICTED_NAMES
+        sys.meta_path = [RestrictedImportHook(),
+                         DisallowExtensionsImportHook()]
     else:
         restricted_names = dict()
 
@@ -171,7 +194,6 @@ def getWSGIApplication(conf, unrestricted=False):
             if base in _MODULE_CACHE:
                 mod = _MODULE_CACHE[base]
             else:
-                sys.meta_path = [RestrictedImportHook()]
                 modules = sys.modules
                 for m in _RESTRICTED_MODULES:
                     if m in sys.modules:
@@ -185,13 +207,14 @@ def getWSGIApplication(conf, unrestricted=False):
                         init_globals=restricted_names,
                         run_name=None)
                 finally:
-                    sys.meta_path = []
                     sys.modules = modules
 
                 _MODULE_CACHE[base] = mod
 
             app_class = google.appengine.ext.webapp.WSGIApplication
             apps += [mod[v] for v in mod if isinstance(mod[v], app_class)]
+
+    sys.meta_path = []
 
     app = WSGIApplication()
 
