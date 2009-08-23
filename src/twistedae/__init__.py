@@ -194,7 +194,7 @@ def getWSGIApplication(conf, unrestricted=False):
             if base in _MODULE_CACHE:
                 mod = _MODULE_CACHE[base]
             else:
-                modules = sys.modules
+                modules = dict(sys.modules)
                 for m in _RESTRICTED_MODULES:
                     if m in sys.modules:
                         del sys.modules[m]
@@ -207,7 +207,8 @@ def getWSGIApplication(conf, unrestricted=False):
                         init_globals=restricted_names,
                         run_name=None)
                 finally:
-                    sys.modules = modules
+                    del sys.modules
+                    sys.modules = dict(modules)
 
                 _MODULE_CACHE[base] = mod
 
@@ -227,10 +228,6 @@ def getWSGIApplication(conf, unrestricted=False):
                 o += getattr(a, k)
 
     return app
-
-
-def setupRuntimeEnvironment(app_root):
-    """Sets up the python runtime environment."""
 
 
 def setupDatastore(app_id, datastore, history, require_indexes, trusted):

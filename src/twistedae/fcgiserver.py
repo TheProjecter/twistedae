@@ -53,8 +53,6 @@ def main():
     conf = twistedae.getAppConfig()
     twistedae.setupStubs(conf)
 
-    twistedae.setupRuntimeEnvironment(app_root)
-
     app = twistedae.getWSGIApplication(conf, options.unrestricted)
 
     environ = dict(
