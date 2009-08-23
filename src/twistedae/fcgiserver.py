@@ -36,10 +36,15 @@ def main():
 
     (options, args) = op.parse_args()
 
+    if options.debug:
+        log_level = logging.DEBUG
+    else:
+        log_level = logging.INFO
+
     logging.basicConfig(
         format='%(levelname)-8s %(asctime)s %(filename)s:%(lineno)s] '
                '%(message)s',
-        level=logging.DEBUG)
+        level=log_level)
 
     app_root = os.environ['APP_ROOT']
     os.chdir(app_root)
