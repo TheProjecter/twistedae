@@ -13,6 +13,8 @@ handlers:
 
 - url: /dummy
   script: dummy.py
+  login: required
+  secure: always
 
 - url: /static
   static_dir: static
