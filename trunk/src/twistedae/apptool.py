@@ -33,35 +33,34 @@ location ~ ^/(%(path)s)/ {
 }
 """
 
-NGINX_SECURE_LOCATION = """
-location ~ ^/(%(path)s) {
-    auth_basic "%(app_id)s";
-    auth_basic_user_file %(passwd_file)s;
-    # Host and port to FastCGI server
-    fastcgi_pass %(addr)s:%(port)s;
+FCGI_PARAMS = """
     fastcgi_param CONTENT_LENGTH $content_length;
     fastcgi_param CONTENT_TYPE $content_type;
     fastcgi_param PATH_INFO $fastcgi_script_name;
     fastcgi_param QUERY_STRING $query_string;
+    fastcgi_param REMOTE_ADDR $remote_addr;
     fastcgi_param REQUEST_METHOD $request_method;
     fastcgi_param REQUEST_URI $request_uri;
+    fastcgi_param SERVER_NAME $server_name;
+    fastcgi_param SERVER_PORT $server_port;
+    fastcgi_param SERVER_PROTOCOL $server_protocol;
     fastcgi_pass_header Authorization;
     fastcgi_intercept_errors off;
+"""
+
+NGINX_SECURE_LOCATION = """
+location ~ ^/(%(path)s) {
+    auth_basic "%(app_id)s";
+    auth_basic_user_file %(passwd_file)s;
+    fastcgi_pass %(addr)s:%(port)s;
+    %(fcgi_params)s
 }
 """
 
 NGINX_FCGI_CONFIG = """
 location / {
-    # Host and port to FastCGI server
     fastcgi_pass %(addr)s:%(port)s;
-    fastcgi_param CONTENT_LENGTH $content_length;
-    fastcgi_param CONTENT_TYPE $content_type;
-    fastcgi_param PATH_INFO $fastcgi_script_name;
-    fastcgi_param QUERY_STRING $query_string;
-    fastcgi_param REQUEST_METHOD $request_method;
-    fastcgi_param REQUEST_URI $request_uri;
-    fastcgi_pass_header Authorization;
-    fastcgi_intercept_errors off;
+    %(fcgi_params)s
 }
 """
 
@@ -100,6 +99,7 @@ def write_nginx_conf(outf, conf, app_root, addr='127.0.0.1', port='8081'):
         proxy_conf.write(NGINX_SECURE_LOCATION % dict(
             addr=addr,
             app_id=conf.application,
+            fcgi_params=FCGI_PARAMS,
             passwd_file=os.path.join(
                 os.getcwd(), os.path.dirname(outf), 'htpasswd'),
             path='|'.join(secure_urls),
@@ -107,7 +107,9 @@ def write_nginx_conf(outf, conf, app_root, addr='127.0.0.1', port='8081'):
             )
         )
 
-    proxy_conf.write(NGINX_FCGI_CONFIG % locals())
+    vars = locals()
+    vars.update(dict(fcgi_params=FCGI_PARAMS))
+    proxy_conf.write(NGINX_FCGI_CONFIG % vars)
     proxy_conf.close()
 
 

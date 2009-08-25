@@ -58,9 +58,6 @@ def main():
     environ = dict(
         APPLICATION_ID=conf.application,
         PATH_TRANSLATED='unknown',
-        SERVER_NAME='twistedae',
-        SERVER_PORT='8080',
-        SERVER_PROTOCOL='HTTP/1.1',
         SERVER_SOFTWARE='twistedae',
         USER=os.getlogin(),
     )
