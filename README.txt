@@ -3,8 +3,8 @@ twistedae - Twisted Google App Engine
 =====================================
 
 The twistedae project aims at providing a full-featured and productive stack to
-run GAE applications. It delivers the parts for building your own scalable App
-Engine while staying compatible with Google's API.
+run Google App Engine applications. It delivers the parts for building your own
+scalable App Engine while staying compatible with Google's API.
 
 
 The Stack
@@ -49,6 +49,18 @@ Run the supervisor daemon, which starts and controls all services at once::
 You can access the application using a web browser with the following URL::
 
   http://localhost:8080/
+
+
+Google's development application server
+---------------------------------------
+
+You may recognize the dev_appserver script in the bin directory after building
+the environment. It's included to check whether your application runs with the
+installed original SDK.
+
+It can be used as expected::
+
+  $ bin/dev_appserver parts/demo
 
 
 Testing
