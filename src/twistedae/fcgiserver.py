@@ -57,7 +57,6 @@ def main():
 
     environ = dict(
         APPLICATION_ID=conf.application,
-        PATH_TRANSLATED='unknown',
         SERVER_SOFTWARE='twistedae',
         USER=os.getlogin(),
     )
