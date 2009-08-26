@@ -29,6 +29,7 @@ import mimetypes
 import mongodb.datastore_mongo_stub
 import os
 import pickle
+import re
 import runpy
 import sys
 import taskqueue_stub
@@ -157,19 +158,32 @@ class WSGIApplication(google.appengine.ext.webapp.WSGIApplication):
         provide the request parameters.
         """
 
+        # Evaluate path translated
+        for pattern, handler in self._url_mapping:
+            if re.match(pattern, environ['PATH_INFO']) is not None:
+                environ['PATH_TRANSLATED'] = (
+                    _MODULE_CACHE.get(handler.__module__).get('__file__'))
+                break
+
+        # Copy original encironment and clear it for re-initialization
         orig_env = dict(os.environ)
         os.environ.clear()
+
+        # Create a new applicaten environment without wsgi.* keys
         app_env = dict(environ)
         for key in ('wsgi.errors', 'wsgi.input', 'wsgi.multiprocess',
                     'wsgi.multithread', 'wsgi.run_once', 'wsgi.url_scheme',
                     'wsgi.version'):
             del app_env[key]
+
+        # Copy the application environment to os.environment
         os.environ.update(app_env)
         try:
             result = super(WSGIApplication, self).__call__(environ, response)
         finally:
             os.environ.clear()
             os.environ.update(orig_env)
+
         return result or ['']
 
 
