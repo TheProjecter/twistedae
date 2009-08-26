@@ -16,6 +16,7 @@
 """Dummy application."""
 
 import google.appengine.ext.webapp
+import os
 import wsgiref.handlers
 
 
@@ -35,7 +36,12 @@ class FailureRequestHandler(google.appengine.ext.webapp.RequestHandler):
         """Handles get."""
 
         self.response.set_status(404)
-        self.response.out.write("Not found!")
+        self.response.out.write("<html><body>Not found!")
+        self.response.out.write("<ul>")
+        for k in os.environ:
+            self.response.out.write("<li>%s: %s</li>" % (k, os.environ[k]))
+        self.response.out.write("</ul>")
+        self.response.out.write("</body></html>")
 
 
 app = google.appengine.ext.webapp.WSGIApplication([
