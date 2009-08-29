@@ -66,8 +66,10 @@ that these directories are on your PATH and following programs can be found:
 When all services are up and running, the supervisor console shows something
 like this:
   {{{
-  appserver                        RUNNING    pid 91685, uptime 0:02:01
-  memcached                        RUNNING    pid 91683, uptime 0:02:01
-  mongod                           RUNNING    pid 91684, uptime 0:02:01
-  nginx                            RUNNING    pid 91686, uptime 0:02:01
+  appserver                        RUNNING    pid 74751, uptime 0:00:18
+  memcached                        RUNNING    pid 74750, uptime 0:00:18
+  mongod                           RUNNING    pid 74748, uptime 0:00:18
+  nginx                            RUNNING    pid 74753, uptime 0:00:18
+  rabbitmq                         RUNNING    pid 74749, uptime 0:00:18
+  taskworker                       RUNNING    pid 74782, uptime 0:00:12
   }}}
