@@ -33,6 +33,8 @@ that these directories are on your PATH and following programs can be found:
  * gcc and g++
  * make
 
+(_Note:_On Debian Lenny libncurses5-dev and libssl-dev are required.)
+
 = Installation =
 
  * Check out the sources:

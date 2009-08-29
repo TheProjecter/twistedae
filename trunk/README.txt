@@ -10,7 +10,7 @@ scalable App Engine while staying compatible with Google's API.
 The Stack
 ---------
 
-The default configuration is built upon following services::
+The key components are::
 
   * mongoDB
   * memcached
@@ -18,6 +18,11 @@ The default configuration is built upon following services::
   * nginx
   * FastCGI
   * supervisor
+
+All these components will be automatically installed by zc.buildout into an
+isolated directory tree on your development machine. If you ever wanted to
+remove the twistedae development environment you just have to delete this
+single directory.
 
 
 Copyright and license
