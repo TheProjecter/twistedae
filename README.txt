@@ -12,11 +12,12 @@ The Stack
 
 The key components are::
 
+  * Google App Engine SDK
   * mongoDB
   * memcached
   * RabbitMQ
-  * nginx
   * FastCGI
+  * nginx
   * supervisor
 
 All these components will be automatically installed by zc.buildout into an
