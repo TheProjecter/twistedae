@@ -21,6 +21,7 @@ import google.appengine.api.memcache
 import google.appengine.ext.db
 import google.appengine.ext.webapp
 import google.appengine.ext.webapp.template
+import logging
 import os
 import random
 import wsgiref.handlers
