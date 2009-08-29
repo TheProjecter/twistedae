@@ -1,5 +1,5 @@
 #summary Brief documentation on installing twistedae.
-#labels Featured,Phase-Deploy,Phase-Requirements
+#labels Featured
 
 = Before you install =
 
