@@ -56,6 +56,7 @@ setuptools.setup(
         'setuptools',
         ],
     extras_require=dict(
+        amqp=['amqplib'],
         mongo=['pymongo'],
         memcached=['pylibmc', 'simplejson']
         ),

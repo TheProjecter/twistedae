@@ -32,7 +32,7 @@ import pickle
 import re
 import runpy
 import sys
-import taskqueue_stub
+import taskqueue.taskqueue_stub
 
 
 def getAppConfig(directory='.'):
@@ -282,7 +282,7 @@ def setupTaskQueue(root_path='.'):
     """Sets up task queue."""
 
     google.appengine.api.apiproxy_stub_map.apiproxy.RegisterStub('taskqueue',
-        taskqueue_stub.TaskQueueServiceStub(root_path=root_path))
+        taskqueue.taskqueue_stub.TaskQueueServiceStub(root_path=root_path))
 
 
 def setupURLFetchStub():
