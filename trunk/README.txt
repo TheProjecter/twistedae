@@ -14,6 +14,7 @@ The default configuration is built upon following services::
 
   * mongoDB
   * memcached
+  * RabbitMQ
   * nginx
   * FastCGI
   * supervisor
