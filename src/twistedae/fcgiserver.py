@@ -58,7 +58,7 @@ def main():
     environ = dict(
         APPLICATION_ID=conf.application,
         SERVER_SOFTWARE='twistedae',
-        USER=os.getlogin(),
+        USER=os.environ['USER'],
     )
 
     config = dict(
