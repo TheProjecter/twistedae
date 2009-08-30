@@ -54,11 +54,12 @@ setuptools.setup(
     install_requires=[
         'flup',
         'setuptools',
+        'simplejson',
         ],
     extras_require=dict(
         amqp=['amqplib'],
         mongo=['pymongo'],
-        memcached=['pylibmc', 'simplejson']
+        memcached=['pylibmc']
         ),
     zip_safe=False,
     )
