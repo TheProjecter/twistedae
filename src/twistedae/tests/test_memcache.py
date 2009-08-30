@@ -96,10 +96,11 @@ class MemcacheTestCase(unittest.TestCase):
     def testGetKey(self):
         """Tries to obtain a key."""
 
-        assert twistedae.memcache_stub.getKey('bar') == 'bar'
-        assert twistedae.memcache_stub.getKey('b', namespace='a') == 'a.b'
+        assert twistedae.memcache_stub.getKey('bar') == 'YmFy'
+        assert twistedae.memcache_stub.getKey('b', namespace='a') == 'YS5i'
         os.environ['APPLICATION_ID'] = 'app'
-        assert twistedae.memcache_stub.getKey('b', namespace='a') == 'app.a.b'
+        assert (twistedae.memcache_stub.getKey('b', namespace='a') ==
+                'YXBwLmEuYg==')
         del os.environ['APPLICATION_ID']
         google.appengine.api.memcache.set('counter', 0, namespace='me') 
         assert google.appengine.api.memcache.get('counter', namespace='me') == 0
@@ -107,6 +108,8 @@ class MemcacheTestCase(unittest.TestCase):
     def testIncrementDecrement(self):
         """Testing automatically incrementing and decrementing."""
 
+        google.appengine.api.memcache.incr('unknown_key')
+        assert google.appengine.api.memcache.get('unknown_key') == 1
         google.appengine.api.memcache.set('counter', 0) 
         assert google.appengine.api.memcache.get('counter') == 0
         google.appengine.api.memcache.incr('counter')

@@ -15,6 +15,7 @@
 # limitations under the License.
 """Memcache integration."""
 
+import base64
 import cPickle
 import google.appengine.api.apiproxy_stub
 import google.appengine.api.memcache.memcache_service_pb
@@ -43,7 +44,8 @@ def getKey(key, namespace=None):
 
     if namespace:
         key = '%(namespace)s.%(key)s' % locals()
-    return '%(app_id)s%(key)s' % locals()
+    key = '%(app_id)s%(key)s' % locals()
+    return base64.b64encode(key)
 
 
 class MemcacheServiceStub(google.appengine.api.apiproxy_stub.APIProxyStub):
@@ -151,7 +153,11 @@ class MemcacheServiceStub(google.appengine.api.apiproxy_stub.APIProxyStub):
         """
         key = getKey(request.key(), request.name_space())
         value = self._cache.get(key)
-        flags, stored_value = simplejson.loads(value)
+        if value is None:
+            flags, stored_value = (google.appengine.api.memcache.TYPE_INT, '0')
+        else:
+            flags, stored_value = simplejson.loads(value)
+
         if flags == google.appengine.api.memcache.TYPE_INT:
             new_value = int(stored_value)
         elif flags == google.appengine.api.memcache.TYPE_LONG:
