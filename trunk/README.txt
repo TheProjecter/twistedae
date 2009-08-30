@@ -12,18 +12,18 @@ The Stack
 
 The key components are::
 
-  * Google App Engine SDK
-  * mongoDB
-  * memcached
-  * RabbitMQ
-  * FastCGI
-  * nginx
-  * supervisor
+  * Google App Engine SDK - http://code.google.com/appengine
+  * mongoDB - http://www.mongodb.org
+  * memcached - http://www.danga.com/memcached/
+  * RabbitMQ - http://www.rabbitmq.com
+  * FastCGI - http://www.fastcgi.com
+  * nginx - http://nginx.net/
+  * Supervisor - http://supervisord.org
 
 All these components will be automatically installed by zc.buildout into an
-isolated directory tree on your development machine. If you ever wanted to
-remove the twistedae development environment you just have to delete this
-single directory.
+isolated directory tree on your development machine. If you want to remove the
+twistedae development environment you just have to delete this single
+directory.
 
 
 Copyright and license
