@@ -203,7 +203,11 @@ def getWSGIApplication(conf, unrestricted=False):
     for handler in conf.handlers:
         script = handler.script
         if script != None:
-            base, ext = os.path.splitext(os.path.basename(script))
+            if '$PYTHON_LIB' in script:
+                # TODO: We need a cleaner way for importing $PYTHON_LIB modules
+                base = script.replace('/', '.')[12:][0:len(script)-15]
+            else:
+                base, unused_ext = os.path.splitext(os.path.basename(script))
 
             if base in _MODULE_CACHE:
                 mod = _MODULE_CACHE[base]
