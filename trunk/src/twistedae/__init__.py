@@ -22,10 +22,8 @@ import google.appengine.api.appinfo
 import google.appengine.api.mail_stub
 import google.appengine.api.urlfetch_stub
 import google.appengine.ext.webapp
-import google.appengine.tools.dev_appserver
 import imp
 import memcache_stub
-import mimetypes
 import mongodb.datastore_mongo_stub
 import os
 import pickle
