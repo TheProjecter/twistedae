@@ -16,13 +16,14 @@
 """Unit tests for the runtime environment."""
 
 import os
+import re
 import sys
 import twistedae
 import unittest
 
 
-class GetWSGIApplicationTestCase(unittest.TestCase):
-    """Getting the WSGI application."""
+class InitTestCase(unittest.TestCase):
+    """Tests a number of helper functions."""
 
     def setUp(self):
         """Loads the sample application."""
@@ -38,9 +39,10 @@ class GetWSGIApplicationTestCase(unittest.TestCase):
 
         twistedae.setupStubs(self.conf)
 
-    def testGetWSGIApplication(self):
-        """Initializes a simple application."""
+    def testInitURLMapping(self):
+        """Initializes the url/script map."""
 
-        import google.appengine.ext.webapp
-        app = twistedae.getWSGIApplication(self.conf)
-        assert isinstance(app, google.appengine.ext.webapp.WSGIApplication) == 1
+        url_mapping = twistedae.initURLMapping(self.conf)
+        for pattern, module, path in url_mapping:
+            pattern.match('/foo')
+            assert module == 'app'
