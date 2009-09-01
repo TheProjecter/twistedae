@@ -13,67 +13,96 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Simple FastCGI server implementation."""
+"""FastCGI script to serve a CGI application."""
 
+import StringIO
 import logging
-import optparse
 import os
+import re
+import runpy
 import sys
+import traceback
 import twistedae
+import twistedae.fcgi
+
+
+def log_traceback():
+    s = StringIO.StringIO()
+    traceback.print_exc(file=s)
+    logging.error(s.getvalue())
 
 
 def main():
     """Initializes the server."""
 
-    usage = "usage: %prog [options]"
-    op = optparse.OptionParser(usage=usage)
-    op.add_option("-d", "--debug", action="store_true", dest="debug",
-                  help="run a single fcgi server process in debug mode",
-                  default=False)
-    op.add_option("--unrestricted", action="store_true", dest="unrestricted",
-                  help="run the server without GAE restrictions",
-                  default=False)
-
-    (options, args) = op.parse_args()
-
-    if options.debug:
-        log_level = logging.DEBUG
-    else:
-        log_level = logging.INFO
-
     logging.basicConfig(
         format='%(levelname)-8s %(asctime)s %(filename)s:%(lineno)s] '
                '%(message)s',
-        level=log_level)
+        level=logging.INFO, filename='var/log/appserver.log')
 
     app_root = os.environ['APP_ROOT']
     os.chdir(app_root)
     sys.path.append(app_root)
 
     conf = twistedae.getAppConfig()
+
+    url_mapping = twistedae.initURLMapping(conf)
+
     twistedae.setupStubs(conf)
 
-    app = twistedae.getWSGIApplication(conf, options.unrestricted)
-
-    environ = dict(
-        APPLICATION_ID=conf.application,
-        SERVER_SOFTWARE='twistedae',
-        USER=os.environ['USER'],
-    )
-
-    config = dict(
-        environ=environ,
-        bindAddress=('127.0.0.1', 8081),
-        multiprocess=False
-    )
-
-    logging.info("Server starting")
-
-    if not options.debug:
-        import flup.server.fcgi_fork
-        server_module = flup.server.fcgi_fork
+    if os.environ.get('RESTRICTED_PYTHON', 'true').lower() == 'false':
+        restricted_names = dict()
     else:
-        import flup.server.fcgi_single
-        server_module = flup.server.fcgi_single
+        [twistedae.RestrictedImportHook.add(m) for m in
+         twistedae.RESTRICTED_MODULES]
+        restricted_names = twistedae.RESTRICTED_NAMES
+        sys.meta_path = [twistedae.RestrictedImportHook(),
+                         twistedae.DisallowExtensionsImportHook()]
 
-    server_module.WSGIServer(app, **config).run()
+    try:
+        while twistedae.fcgi.isFCGI():
+            req = twistedae.fcgi.Accept()
+
+            # Initialize application environment
+            orig_env = dict(os.environ)
+            os.environ.clear()
+            os.environ.update(req.env)
+            os.environ['APPLICATION_ID'] = conf.application
+
+            # Evaluate path translated
+            for pattern, name, script in url_mapping:
+                if re.match(pattern, os.environ['PATH_INFO']) is not None:
+                    os.environ['PATH_TRANSLATED'] = script
+                    break
+
+            modules = dict(sys.modules)
+            for m in twistedae.RESTRICTED_MODULES:
+                if m in sys.modules:
+                    del sys.modules[m]
+            if hasattr(sys, 'path_importer_cache'):
+                sys.path_importer_cache.clear()
+
+            try:
+                # Load and run the application module
+                mod = runpy.run_module(
+                    name,
+                    init_globals=restricted_names,
+                    run_name='__main__')
+            finally:
+                del sys.modules
+                sys.modules = dict(modules)
+
+            # Restor original environment
+            os.environ.clear()
+            os.environ.update(orig_env)
+
+            try:
+                req.Finish()
+            except:
+                log_traceback()
+    except:
+        log_traceback()
+
+
+if __name__ == "__main__":
+    main()

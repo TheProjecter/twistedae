@@ -51,6 +51,27 @@ def getAppConfig(directory='.'):
     return conf
 
 
+def initURLMapping(conf):
+    """Returns a list with mappings URL to module name and script."""
+
+    url_mapping = []
+
+    for handler in conf.handlers:
+        script = handler.script
+        regexp = handler.url
+        if script != None:
+            base, unused_ext = os.path.splitext(os.path.basename(script))
+            if not regexp.startswith('^'):
+                regexp = '^' + regexp
+            if not regexp.endswith('$'):
+                regexp += '$'
+            compiled = re.compile(regexp)
+            path = os.path.join(os.getcwd(), script)
+            url_mapping.append((compiled, base, path))
+ 
+    return url_mapping
+
+
 class NotImplementedClass(object):
     """Provided by classes not implemented in the restricted environment."""
 
@@ -79,16 +100,14 @@ class RestrictedFile(file):
         super(RestrictedFile, self).__init__(filename, mode, bufsize, **kw)
 
 
-_MODULE_CACHE = {}
-
 # See http://code.google.com/appengine/docs/python/runtime.html#Pure_Python for
 # more information on restrictions in the GAE Python runtime environment.
 
-_RESTRICTED_NAMES = {
+RESTRICTED_NAMES = {
     'open': RestrictedOpen,
 }
 
-_RESTRICTED_MODULES = {
+RESTRICTED_MODULES = {
     '__builtin__': {'buffer': NotImplementedClass,
                     'file': RestrictedFile,
                     'open': RestrictedOpen
@@ -122,7 +141,7 @@ class RestrictedImportHook(object):
 
     def load_module(self, fullname):
         new_module = imp.new_module(fullname)
-        new_module.__dict__.update(_RESTRICTED_MODULES[fullname] or dict())
+        new_module.__dict__.update(RESTRICTED_MODULES[fullname] or dict())
         return new_module
 
 
@@ -143,109 +162,6 @@ class DisallowExtensionsImportHook(object):
                 if file_type == imp.C_EXTENSION:
                     raise ImportError
         return
-
-
-class WSGIApplication(google.appengine.ext.webapp.WSGIApplication):
-    """The WSGI application."""
-
-    def __init__(self, debug=True):
-        super(WSGIApplication, self).__init__([], debug)
-
-    def __call__(self, environ, response):
-        """Returns the output of all handlers.
-
-        We have to adjust os.environ in same way GAE does. Namely, it must
-        provide the request parameters.
-        """
-
-        # Evaluate path translated
-        for pattern, handler in self._url_mapping:
-            if re.match(pattern, environ['PATH_INFO']) is not None:
-                environ['PATH_TRANSLATED'] = (
-                    _MODULE_CACHE.get(handler.__module__).get('__file__'))
-                break
-
-        # Copy original encironment and clear it for re-initialization
-        orig_env = dict(os.environ)
-        os.environ.clear()
-
-        # Create a new applicaten environment without wsgi.* keys
-        app_env = dict(environ)
-        for key in ('wsgi.errors', 'wsgi.input', 'wsgi.multiprocess',
-                    'wsgi.multithread', 'wsgi.run_once', 'wsgi.url_scheme',
-                    'wsgi.version'):
-            del app_env[key]
-
-        # Copy the application environment to os.environment
-        os.environ.update(app_env)
-        try:
-            result = super(WSGIApplication, self).__call__(environ, response)
-        finally:
-            os.environ.clear()
-            os.environ.update(orig_env)
-
-        return result or ['']
-
-
-def getWSGIApplication(conf, unrestricted=False):
-    """Returns a master WSGI application object."""
-
-    apps = []
-
-    if not unrestricted:
-        [RestrictedImportHook.add(m) for m in _RESTRICTED_MODULES]
-        restricted_names = _RESTRICTED_NAMES
-        sys.meta_path = [RestrictedImportHook(),
-                         DisallowExtensionsImportHook()]
-    else:
-        restricted_names = dict()
-
-    for handler in conf.handlers:
-        script = handler.script
-        if script != None:
-            if '$PYTHON_LIB' in script:
-                # TODO: We need a cleaner way for importing $PYTHON_LIB modules
-                base = script.replace('/', '.')[12:][0:len(script)-15]
-            else:
-                base, unused_ext = os.path.splitext(os.path.basename(script))
-
-            if base in _MODULE_CACHE:
-                mod = _MODULE_CACHE[base]
-            else:
-                modules = dict(sys.modules)
-                for m in _RESTRICTED_MODULES:
-                    if m in sys.modules:
-                        del sys.modules[m]
-                if hasattr(sys, 'path_importer_cache'):
-                    sys.path_importer_cache.clear()
-
-                try:
-                    mod = runpy.run_module(
-                        base,
-                        init_globals=restricted_names,
-                        run_name=None)
-                finally:
-                    del sys.modules
-                    sys.modules = dict(modules)
-
-                _MODULE_CACHE[base] = mod
-
-            app_class = google.appengine.ext.webapp.WSGIApplication
-            apps += [mod[v] for v in mod if isinstance(mod[v], app_class)]
-
-    sys.meta_path = []
-
-    app = WSGIApplication()
-
-    for a in apps:
-        for k in ['_handler_map', '_pattern_map', '_url_mapping']:
-            o = getattr(app, k)
-            if isinstance(o, dict):
-                o.update(getattr(a, k))
-            elif isinstance(o, list):
-                o += getattr(a, k)
-
-    return app
 
 
 def setupDatastore(app_id, datastore, history, require_indexes, trusted):
