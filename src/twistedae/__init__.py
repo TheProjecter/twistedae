@@ -16,6 +16,7 @@
 """Helper functions for registering App Engine API proxy stubs."""
 
 import StringIO
+import capability_stub
 import errno
 import google.appengine.api.apiproxy_stub_map
 import google.appengine.api.appinfo
@@ -162,6 +163,13 @@ class DisallowExtensionsImportHook(object):
         return
 
 
+def setupCapability():
+    """Sets up cabability service."""
+
+    google.appengine.api.apiproxy_stub_map.apiproxy.RegisterStub(
+        'capability_service', capability_stub.CapabilityServiceStub())
+
+
 def setupDatastore(app_id, datastore, history, require_indexes, trusted):
     """Sets up datastore."""
 
@@ -215,6 +223,8 @@ def setupStubs(conf):
 
     google.appengine.api.apiproxy_stub_map.apiproxy = \
                     google.appengine.api.apiproxy_stub_map.APIProxyStubMap()
+
+    setupCapability()
 
     setupDatastore(conf.application,
                    'dev_appserver.datastore',
