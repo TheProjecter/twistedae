@@ -68,6 +68,7 @@ def main():
             os.environ.clear()
             os.environ.update(req.env)
             os.environ['APPLICATION_ID'] = conf.application
+            os.environ['SERVER_SOFTWARE'] = 'TwistedAE/0.1.0'
 
             # Evaluate path translated
             for pattern, name, script in url_mapping:
