@@ -16,6 +16,7 @@
 """Demo application."""
 
 import datetime
+import google.appengine.api.capabilities
 import google.appengine.api.labs.taskqueue
 import google.appengine.api.memcache
 import google.appengine.ext.db
@@ -27,8 +28,6 @@ import random
 import wsgiref.handlers
 
 NUM_SHARDS = 20
-
-GLOBAL = []
 
 
 class SimpleCounterShard(google.appengine.ext.db.Model):
@@ -69,17 +68,26 @@ def get_count():
 
 
 def get_notes():
-    notes = google.appengine.api.memcache.get("notes")
-    if notes is not None:
-        return notes
-    else:
-        query = google.appengine.ext.db.GqlQuery(
-            "SELECT * FROM Note ORDER BY date DESC LIMIT 100")
-        notes = ['%s - %s' % (note.date, note.body) for note in query]
+    """Returns a list of notes."""
+
+    memcache_enabled = (google.appengine.api.capabilities.
+                        CapabilitySet('memcache').is_enabled())
+
+    if memcache_enabled:
+        notes = google.appengine.api.memcache.get("notes")
+        if notes is not None:
+            return notes
+
+    query = google.appengine.ext.db.GqlQuery(
+        "SELECT * FROM Note ORDER BY date DESC LIMIT 100")
+
+    notes = ['%s - %s' % (note.date, note.body) for note in query]
+
+    if memcache_enabled:
         if not google.appengine.api.memcache.add("notes", notes, 10):
             logging.error("Writing to memcache failed")
 
-        return notes
+    return notes
 
 
 class DemoRequestHandler(google.appengine.ext.webapp.RequestHandler):
@@ -91,13 +99,12 @@ class DemoRequestHandler(google.appengine.ext.webapp.RequestHandler):
         increment()
         count = get_count()
         notes = get_notes()
-        GLOBAL.append(count)
         now = datetime.datetime.utcnow()
         eta = now + datetime.timedelta(0, 5)
         google.appengine.api.labs.taskqueue.add(url='/makenote',
                                                 eta=eta,
                                                 payload="%i delayed" % count)
-        vars = dict(count=count, env=os.environ, notes=notes, debug=GLOBAL)
+        vars = dict(count=count, env=os.environ, notes=notes)
         output = google.appengine.ext.webapp.template.render('index.html', vars)
         self.response.out.write(output)
 
