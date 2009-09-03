@@ -50,14 +50,14 @@ def main():
 
     twistedae.setupStubs(conf)
 
-    if os.environ.get('RESTRICTED_PYTHON', 'true').lower() == 'false':
-        restricted_names = dict()
-    else:
+    if os.environ.get('RESTRICTED_PYTHON', 'false').lower() == 'true':
         [twistedae.RestrictedImportHook.add(m) for m in
          twistedae.RESTRICTED_MODULES]
         restricted_names = twistedae.RESTRICTED_NAMES
         sys.meta_path = [twistedae.RestrictedImportHook(),
                          twistedae.DisallowExtensionsImportHook()]
+    else:
+        restricted_names = dict()
 
     try:
         while twistedae.fcgi.isFCGI():
