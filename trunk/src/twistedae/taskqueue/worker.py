@@ -16,15 +16,45 @@
 """Task worker implementation."""
 
 from amqplib import client_0_8 as amqp
+import datetime
 import logging
 import simplejson
+import threading
+import time
 import urllib2
+
+
+class _UTCTimeZone(datetime.tzinfo):
+  """UTC timezone."""
+
+  ZERO = datetime.timedelta(0)
+
+  def utcoffset(self, dt):
+    return self.ZERO
+
+  def dst(self, dt):
+    return self.ZERO
+
+  def tzname(self, dt):
+    return 'UTC'
+
+_UTC = _UTCTimeZone()
 
 
 def handle_task(msg):
     """Decodes received message and processes task."""
 
     task = simplejson.loads(msg.body)
+
+    eta = datetime.datetime.fromtimestamp(task['eta'], _UTC).astimezone(_UTC)
+    eta = eta + datetime.timedelta(hours=1)
+    now = datetime.datetime.now()
+
+    if now.tzinfo is None:
+        now = now.replace(tzinfo=_UTC)
+
+    if eta > now:
+        return False
 
     req = urllib2.Request(
         url='http://127.0.0.1:8080%s' % task['url'],
@@ -70,8 +100,6 @@ def main():
 
     def recv_callback(msg):
         if handle_task(msg):
-            logging.debug(
-                "handled task '%s'" % msg.properties.get('task_name'))
             chan.basic_ack(msg.delivery_tag)
 
     chan.basic_consume(
@@ -79,6 +107,15 @@ def main():
         no_ack=False,
         callback=recv_callback,
         consumer_tag="test")
+
+    def recover_loop():
+        while True:
+            chan.basic_recover(True)
+            time.sleep(5)
+
+    timer = threading.Thread(target=recover_loop)
+    timer.setDaemon(True)
+    timer.start()
 
     try:
         while True:
