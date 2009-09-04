@@ -21,22 +21,28 @@ import simplejson
 import urllib2
 
 
-def recv_callback(msg):
+def handle_task(msg):
     """Decodes received message and processes task."""
 
     task = simplejson.loads(msg.body)
+
     req = urllib2.Request(
         url='http://127.0.0.1:8080%s' % task['url'],
         data=task['payload'],
         headers={'Content-Type': 'text/plain'}
-        )
+    )
+
     try:
         res = urllib2.urlopen(req)
     except urllib2.URLError, err_obj:
         logging.error("failed task %s (reason: %s)" % (task, err_obj))
-        return
+        return False
+
     if res.code != 200:
-        logging.error("failed task %s (response code: %i" % (task, res.code))
+        logging.error("failed task %s (code: %i)" % (task, res.code))
+        return False
+
+    return True
 
 
 def main():
@@ -62,8 +68,17 @@ def main():
         exchange="taskqueue", type="direct", durable=True, auto_delete=False)
     chan.queue_bind(queue="tasks", exchange="taskqueue", routing_key="worker")
 
+    def recv_callback(msg):
+        if handle_task(msg):
+            logging.debug(
+                "handled task '%s'" % msg.properties.get('task_name'))
+            chan.basic_ack(msg.delivery_tag)
+
     chan.basic_consume(
-        queue='tasks', no_ack=True, callback=recv_callback, consumer_tag="test")
+        queue='tasks',
+        no_ack=False,
+        callback=recv_callback,
+        consumer_tag="test")
 
     try:
         while True:
