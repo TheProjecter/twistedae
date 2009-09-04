@@ -99,7 +99,7 @@ class DemoRequestHandler(google.appengine.ext.webapp.RequestHandler):
         increment()
         count = get_count()
         notes = get_notes()
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         eta = now + datetime.timedelta(0, 5)
         google.appengine.api.labs.taskqueue.add(url='/makenote',
                                                 eta=eta,
