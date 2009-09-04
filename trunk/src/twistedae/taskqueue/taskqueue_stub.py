@@ -84,6 +84,7 @@ class TaskQueueServiceStub(google.appengine.api.apiproxy_stub.APIProxyStub):
 
         msg = amqp.Message(simplejson.dumps(task))
         msg.properties["delivery_mode"] = 2
+        msg.properties["task_name"] = request.task_name()
         retries = 0
         while retries <= MAX_RETRIES:
             try:
