@@ -21,6 +21,7 @@ import os
 import re
 import runpy
 import sys
+import time
 import traceback
 import twistedae
 import twistedae.fcgi
@@ -34,6 +35,10 @@ def log_traceback():
 
 def main():
     """Initializes the server."""
+
+    # Setting the time zone
+    os.environ['TZ'] = 'UTC'
+    time.tzset()
 
     logging.basicConfig(
         format='%(levelname)-8s %(asctime)s %(filename)s:%(lineno)s] '
@@ -69,6 +74,7 @@ def main():
             os.environ.update(req.env)
             os.environ['APPLICATION_ID'] = conf.application
             os.environ['SERVER_SOFTWARE'] = 'TwistedAE/0.1.0'
+            os.environ['TZ'] = 'UTC'
 
             # Evaluate path translated
             for pattern, name, script in url_mapping:
