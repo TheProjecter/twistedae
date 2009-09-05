@@ -50,6 +50,14 @@ priority = 20
 redirect_stderr = true
 stdout_logfile = ${buildout:directory}/var/log/taskworker.log
 
+[program:deferred_taskworker]
+command = ${buildout:directory}/bin/deferred_taskworker 
+process_name = deferred_taskworker
+directory = ${buildout:directory}
+priority = 20
+redirect_stderr = true
+stdout_logfile = ${buildout:directory}/var/log/deferred_taskworker.log
+
 [fcgi-program:appserver]
 command = ${buildout:directory}/bin/appserver
 socket = tcp://localhost:8081
