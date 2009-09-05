@@ -26,7 +26,7 @@ import simplejson
 import socket
 
 
-MAX_RETRIES = 1
+MAX_CONNECTION_RETRIES = 1
 
 
 class TaskQueueServiceStub(google.appengine.api.apiproxy_stub.APIProxyStub):
@@ -73,7 +73,7 @@ class TaskQueueServiceStub(google.appengine.api.apiproxy_stub.APIProxyStub):
                 TaskQueueServiceError.UNKNOWN_QUEUE)
             return
 
-        task = dict(
+        task_dict = dict(
             name=request.task_name(),
             url=request.url(),
             method=request.method(),
@@ -82,18 +82,18 @@ class TaskQueueServiceStub(google.appengine.api.apiproxy_stub.APIProxyStub):
             queue=request.queue_name()
         )
 
-        msg = amqp.Message(simplejson.dumps(task))
+        msg = amqp.Message(simplejson.dumps(task_dict))
         msg.properties["delivery_mode"] = 2
         msg.properties["task_name"] = request.task_name()
         retries = 0
-        while retries <= MAX_RETRIES:
+        while retries <= MAX_CONNECTION_RETRIES:
             try:
                 self.channel.basic_publish(
-                    msg, exchange="taskqueue", routing_key="worker")
+                    msg, exchange="immediate", routing_key="normal_worker")
                 break
             except Exception, err_obj:
                 retries += 1
-                if retries > MAX_RETRIES:
+                if retries > MAX_CONNECTION_RETRIES:
                     raise Exception, err_obj
                 if isinstance(err_obj, socket.error):
                     logging.error("queue server not reachable. retrying...")

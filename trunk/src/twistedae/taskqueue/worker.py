@@ -18,6 +18,7 @@
 from amqplib import client_0_8 as amqp
 import datetime
 import logging
+import os
 import simplejson
 import threading
 import time
@@ -46,7 +47,7 @@ def handle_task(msg):
 
     task = simplejson.loads(msg.body)
 
-    eta = datetime.datetime.fromtimestamp(task['eta'], _UTC).astimezone(_UTC)
+    eta = datetime.datetime.fromtimestamp(task['eta'], _UTC)
     eta = eta + datetime.timedelta(hours=1)
     now = datetime.datetime.now()
 
@@ -75,7 +76,7 @@ def handle_task(msg):
     return True
 
 
-def main():
+def main(queue="tasks", exchange="immediate", routing_key="normal_worker"):
     """The main function."""
 
     logging.basicConfig(
@@ -93,20 +94,22 @@ def main():
     chan = conn.channel()
 
     chan.queue_declare(
-        queue="tasks", durable=True, exclusive=False, auto_delete=False)
+        queue=queue, durable=True, exclusive=False, auto_delete=False)
     chan.exchange_declare(
-        exchange="taskqueue", type="direct", durable=True, auto_delete=False)
-    chan.queue_bind(queue="tasks", exchange="taskqueue", routing_key="worker")
+        exchange=exchange, type="direct", durable=True, auto_delete=False)
+    chan.queue_bind(queue=queue, exchange=exchange, routing_key=routing_key)
 
     def recv_callback(msg):
         if handle_task(msg):
             chan.basic_ack(msg.delivery_tag)
 
+    _consumer_tag = "consumer.%i" % os.getpid()
+
     chan.basic_consume(
-        queue='tasks',
+        queue=queue,
         no_ack=False,
         callback=recv_callback,
-        consumer_tag="test")
+        consumer_tag=_consumer_tag)
 
     def recover_loop():
         while True:
@@ -121,7 +124,7 @@ def main():
         while True:
             chan.wait()
     finally:
-        chan.basic_cancel("test")
+        chan.basic_cancel(_consumer_tag)
 
         chan.close()
         conn.close()
