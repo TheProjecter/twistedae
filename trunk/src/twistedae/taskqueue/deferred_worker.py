@@ -13,68 +13,21 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Task worker implementation."""
+"""Worker implementation for deferred tasks."""
 
 from amqplib import client_0_8 as amqp
 import datetime
 import logging
 import os
 import simplejson
+import threading
+import time
+from twistedae.taskqueue.worker import _UTC
 import urllib2
 
 
-class _UTCTimeZone(datetime.tzinfo):
-  """UTC timezone."""
-
-  ZERO = datetime.timedelta(0)
-
-  def utcoffset(self, dt):
-    return self.ZERO
-
-  def dst(self, dt):
-    return self.ZERO
-
-  def tzname(self, dt):
-    return 'UTC'
-
-_UTC = _UTCTimeZone()
-
-
-def handle_task(msg):
-    """Decodes received message and processes task."""
-
-    task = simplejson.loads(msg.body)
-
-    eta = datetime.datetime.fromtimestamp(task['eta'], _UTC)
-    eta = eta + datetime.timedelta(hours=1)
-    now = datetime.datetime.now()
-
-    if now.tzinfo is None:
-        now = now.replace(tzinfo=_UTC)
-
-    if eta > now:
-        return False
-
-    req = urllib2.Request(
-        url='http://127.0.0.1:8080%s' % task['url'],
-        data=task['payload'],
-        headers={'Content-Type': 'text/plain'}
-    )
-
-    try:
-        res = urllib2.urlopen(req)
-    except urllib2.URLError, err_obj:
-        logging.error("failed task %s (reason: %s)" % (task, err_obj))
-        return False
-
-    if res.code != 200:
-        logging.error("failed task %s (code: %i)" % (task, res.code))
-        return False
-
-    return True
-
-
-def main(queue="tasks", exchange="immediate", routing_key="normal_worker"):
+def main(
+    queue="deferred_tasks", exchange="deferred", routing_key="deferred_worker"):
     """The main function."""
 
     logging.basicConfig(
@@ -98,10 +51,18 @@ def main(queue="tasks", exchange="immediate", routing_key="normal_worker"):
     chan.queue_bind(queue=queue, exchange=exchange, routing_key=routing_key)
 
     def recv_callback(msg):
-        if handle_task(msg):
-            chan.basic_ack(msg.delivery_tag)
-        else:
-            task = simplejson.loads(msg.body)
+        task = simplejson.loads(msg.body)
+
+        eta = datetime.datetime.fromtimestamp(task['eta'], _UTC)
+        eta = eta + datetime.timedelta(hours=1)
+        now = datetime.datetime.now()
+
+        if now.tzinfo is None:
+            now = now.replace(tzinfo=_UTC)
+
+        if eta <= now:
+            # Move back to 'immediate' queue
+
             task_dict = dict(task)
 
             new_msg = amqp.Message(simplejson.dumps(task_dict))
@@ -109,7 +70,11 @@ def main(queue="tasks", exchange="immediate", routing_key="normal_worker"):
             new_msg.properties["task_name"] = task['name']
 
             chan.basic_publish(
-                new_msg, exchange="deferred", routing_key="deferred_worker")
+                new_msg, exchange="immediate", routing_key="normal_worker")
+
+            chan.basic_ack(msg.delivery_tag)
+
+        return
 
     _consumer_tag = "consumer.%i" % os.getpid()
 
@@ -118,6 +83,15 @@ def main(queue="tasks", exchange="immediate", routing_key="normal_worker"):
         no_ack=False,
         callback=recv_callback,
         consumer_tag=_consumer_tag)
+
+    def recover_loop():
+        while True:
+            chan.basic_recover(True)
+            time.sleep(10)
+
+    timer = threading.Thread(target=recover_loop)
+    timer.setDaemon(True)
+    timer.start()
 
     try:
         while True:
