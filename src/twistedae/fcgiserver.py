@@ -76,16 +76,19 @@ def main():
             os.environ['SERVER_SOFTWARE'] = 'TwistedAE/0.1.0'
             os.environ['TZ'] = 'UTC'
 
-            # Evaluate path translated
+            # Evaluate script path and set PATH_TRANSLATED environment
+            # variable
             for pattern, name, script in url_mapping:
                 if re.match(pattern, os.environ['PATH_INFO']) is not None:
                     os.environ['PATH_TRANSLATED'] = script
                     break
 
             modules = dict(sys.modules)
+
             for m in twistedae.RESTRICTED_MODULES:
                 if m in sys.modules:
                     del sys.modules[m]
+
             if hasattr(sys, 'path_importer_cache'):
                 sys.path_importer_cache.clear()
 
@@ -99,7 +102,7 @@ def main():
                 del sys.modules
                 sys.modules = dict(modules)
 
-            # Restor original environment
+            # Restore original environment
             os.environ.clear()
             os.environ.update(orig_env)
 
