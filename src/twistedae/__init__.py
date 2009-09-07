@@ -22,6 +22,7 @@ import google.appengine.api.apiproxy_stub_map
 import google.appengine.api.appinfo
 import google.appengine.api.mail_stub
 import google.appengine.api.urlfetch_stub
+import google.appengine.api.xmpp.xmpp_service_stub
 import google.appengine.ext.webapp
 import imp
 import memcache_stub
@@ -218,11 +219,18 @@ def setupURLFetchStub():
         google.appengine.api.urlfetch_stub.URLFetchServiceStub())
 
 
+def setupXMPP():
+    """Sets up XMPP."""
+
+    google.appengine.api.apiproxy_stub_map.apiproxy.RegisterStub('xmpp',
+        google.appengine.api.xmpp.xmpp_service_stub.XmppServiceStub())
+
+
 def setupStubs(conf):
     """Sets up api proxy stubs."""
 
     google.appengine.api.apiproxy_stub_map.apiproxy = \
-                    google.appengine.api.apiproxy_stub_map.APIProxyStubMap()
+        google.appengine.api.apiproxy_stub_map.APIProxyStubMap()
 
     setupCapability()
 
@@ -238,3 +246,5 @@ def setupStubs(conf):
     setupTaskQueue()
 
     setupURLFetchStub()
+
+    setupXMPP()
