@@ -78,7 +78,7 @@ def main(
     def recover_loop():
         while True:
             chan.basic_recover(False)
-            time.sleep(10)
+            time.sleep(5)
 
     timer = threading.Thread(target=recover_loop)
     timer.setDaemon(True)
