@@ -16,28 +16,11 @@
 """Task worker implementation."""
 
 from amqplib import client_0_8 as amqp
-import datetime
 import logging
 import os
 import simplejson
+import twistedae.taskqueue
 import urllib2
-
-
-class _UTCTimeZone(datetime.tzinfo):
-  """UTC timezone."""
-
-  ZERO = datetime.timedelta(0)
-
-  def utcoffset(self, dt):
-    return self.ZERO
-
-  def dst(self, dt):
-    return self.ZERO
-
-  def tzname(self, dt):
-    return 'UTC'
-
-_UTC = _UTCTimeZone()
 
 
 def handle_task(msg):
@@ -45,14 +28,7 @@ def handle_task(msg):
 
     task = simplejson.loads(msg.body)
 
-    eta = datetime.datetime.fromtimestamp(task['eta'], _UTC)
-    eta = eta + datetime.timedelta(hours=1)
-    now = datetime.datetime.now()
-
-    if now.tzinfo is None:
-        now = now.replace(tzinfo=_UTC)
-
-    if eta > now:
+    if twistedae.taskqueue.is_deferred_eta(task['eta']):
         return False
 
     req = urllib2.Request(
@@ -65,10 +41,6 @@ def handle_task(msg):
         res = urllib2.urlopen(req)
     except urllib2.URLError, err_obj:
         logging.error("failed task %s (reason: %s)" % (task, err_obj))
-        return False
-
-    if res.code != 200:
-        logging.error("failed task %s (code: %i)" % (task, res.code))
         return False
 
     return True
@@ -98,11 +70,13 @@ def main(queue="tasks", exchange="immediate", routing_key="normal_worker"):
     chan.queue_bind(queue=queue, exchange=exchange, routing_key=routing_key)
 
     def recv_callback(msg):
-        if handle_task(msg):
-            chan.basic_ack(msg.delivery_tag)
-        else:
+        if not handle_task(msg):
             task = simplejson.loads(msg.body)
             task_dict = dict(task)
+
+            task_dict["try_count"] = task["try_count"] + 1
+            task_dict["eta"] = twistedae.taskqueue.get_new_eta_usec(
+                task_dict["try_count"])
 
             new_msg = amqp.Message(simplejson.dumps(task_dict))
             new_msg.properties["delivery_mode"] = 2
@@ -110,6 +84,8 @@ def main(queue="tasks", exchange="immediate", routing_key="normal_worker"):
 
             chan.basic_publish(
                 new_msg, exchange="deferred", routing_key="deferred_worker")
+
+        chan.basic_ack(msg.delivery_tag)
 
     _consumer_tag = "consumer.%i" % os.getpid()
 

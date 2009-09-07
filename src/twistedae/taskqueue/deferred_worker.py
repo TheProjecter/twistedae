@@ -16,13 +16,12 @@
 """Worker implementation for deferred tasks."""
 
 from amqplib import client_0_8 as amqp
-import datetime
 import logging
 import os
 import simplejson
 import threading
 import time
-from twistedae.taskqueue.worker import _UTC
+import twistedae.taskqueue
 import urllib2
 
 
@@ -52,15 +51,7 @@ def main(
 
     def recv_callback(msg):
         task = simplejson.loads(msg.body)
-
-        eta = datetime.datetime.fromtimestamp(task['eta'], _UTC)
-        eta = eta + datetime.timedelta(hours=1)
-        now = datetime.datetime.now()
-
-        if now.tzinfo is None:
-            now = now.replace(tzinfo=_UTC)
-
-        if eta <= now:
+        if not twistedae.taskqueue.is_deferred_eta(task['eta']):
             # Move back to 'immediate' queue
 
             task_dict = dict(task)
@@ -71,6 +62,8 @@ def main(
 
             chan.basic_publish(
                 new_msg, exchange="immediate", routing_key="normal_worker")
+
+            logging.debug("%s" % task)
 
             chan.basic_ack(msg.delivery_tag)
 
