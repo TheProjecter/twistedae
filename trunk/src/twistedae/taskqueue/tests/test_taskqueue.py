@@ -15,9 +15,12 @@
 # limitations under the License.
 """Unit tests for task queue."""
 
+import datetime
 import google.appengine.api.apiproxy_stub
 import google.appengine.api.apiproxy_stub_map
 import os
+import time
+import twistedae.taskqueue
 import twistedae.taskqueue.taskqueue_stub
 import unittest
 
@@ -49,6 +52,17 @@ class TaskQueueTestCase(unittest.TestCase):
 
         google.appengine.api.apiproxy_stub_map.apiproxy.RegisterStub(
             'urlfetch', DummyURLFetchServiceStub())
+
+    def testETA(self):
+        """Tests helper functions for computing task execution time."""
+
+        os.environ['TZ'] = 'UTC'
+        time.tzset()
+        eta = twistedae.taskqueue.get_new_eta_usec(0)
+        assert twistedae.taskqueue.is_deferred_eta(eta) == True
+        t = datetime.datetime.now() - datetime.timedelta(seconds=20)
+        eta = time.mktime(t.replace(tzinfo=twistedae.taskqueue.UTC).timetuple())
+        assert twistedae.taskqueue.is_deferred_eta(eta) == False
 
     def testAddingTasks(self):
         """Tests for adding tasks."""
