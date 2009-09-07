@@ -63,8 +63,6 @@ def main(
             chan.basic_publish(
                 new_msg, exchange="immediate", routing_key="normal_worker")
 
-            logging.debug("%s" % task)
-
             chan.basic_ack(msg.delivery_tag)
 
         return
@@ -79,7 +77,7 @@ def main(
 
     def recover_loop():
         while True:
-            chan.basic_recover(True)
+            chan.basic_recover(False)
             time.sleep(10)
 
     timer = threading.Thread(target=recover_loop)

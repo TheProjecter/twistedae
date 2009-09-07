@@ -24,6 +24,7 @@ import google.appengine.runtime.apiproxy_errors
 import logging
 import simplejson
 import socket
+import twistedae.taskqueue
 
 
 MAX_CONNECTION_RETRIES = 1
@@ -90,8 +91,12 @@ class TaskQueueServiceStub(google.appengine.api.apiproxy_stub.APIProxyStub):
         conn_retries = 0
         while conn_retries <= MAX_CONNECTION_RETRIES:
             try:
-                self.channel.basic_publish(
-                    msg, exchange="immediate", routing_key="normal_worker")
+                if twistedae.taskqueue.is_deferred_eta(task_dict['eta']):
+                    self.channel.basic_publish(
+                        msg, exchange="deferred", routing_key="deferred_worker")
+                else:
+                    self.channel.basic_publish(
+                        msg, exchange="immediate", routing_key="normal_worker")
                 break
             except Exception, err_obj:
                 conn_retries += 1
