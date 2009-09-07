@@ -79,21 +79,23 @@ class TaskQueueServiceStub(google.appengine.api.apiproxy_stub.APIProxyStub):
             method=request.method(),
             eta=request.eta_usec()/1000000,
             payload=request.body(),
-            queue=request.queue_name()
+            queue=request.queue_name(),
+            try_count=0
         )
 
         msg = amqp.Message(simplejson.dumps(task_dict))
         msg.properties["delivery_mode"] = 2
         msg.properties["task_name"] = request.task_name()
-        retries = 0
-        while retries <= MAX_CONNECTION_RETRIES:
+
+        conn_retries = 0
+        while conn_retries <= MAX_CONNECTION_RETRIES:
             try:
                 self.channel.basic_publish(
                     msg, exchange="immediate", routing_key="normal_worker")
                 break
             except Exception, err_obj:
-                retries += 1
-                if retries > MAX_CONNECTION_RETRIES:
+                conn_retries += 1
+                if conn_retries > MAX_CONNECTION_RETRIES:
                     raise Exception, err_obj
                 if isinstance(err_obj, socket.error):
                     logging.error("queue server not reachable. retrying...")
