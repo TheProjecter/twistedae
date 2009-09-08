@@ -58,7 +58,7 @@ def is_deferred_eta(eta):
 
 
 def get_new_eta_usec(try_count):
-    """Returns a new astimated execution time depending on try count."""
+    """Returns a new estimated execution time depending on try count."""
 
     eta = datetime.datetime.utcnow() + datetime.timedelta(seconds=10)
     return time.mktime(eta.replace(tzinfo=UTC).timetuple())
