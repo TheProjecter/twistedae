@@ -16,6 +16,7 @@
 """FastCGI script to serve a CGI application."""
 
 import StringIO
+import fcgiapp
 import logging
 import os
 import re
@@ -24,7 +25,6 @@ import sys
 import time
 import traceback
 import twistedae
-import twistedae.fcgi
 
 
 def log_traceback():
@@ -65,13 +65,17 @@ def main():
         restricted_names = dict()
 
     try:
-        while twistedae.fcgi.isFCGI():
-            req = twistedae.fcgi.Accept()
+        while True:
+            (inp, out, err, env) = fcgiapp.Accept()
+
+            sys.stdin = inp
+            sys.stdout = out
+            sys.stderr = err
 
             # Initialize application environment
             orig_env = dict(os.environ)
             os.environ.clear()
-            os.environ.update(req.env)
+            os.environ.update(env)
             os.environ['APPLICATION_ID'] = conf.application
             os.environ['SERVER_SOFTWARE'] = 'TwistedAE/0.1.0'
             os.environ['TZ'] = 'UTC'
@@ -107,7 +111,7 @@ def main():
             os.environ.update(orig_env)
 
             try:
-                req.Finish()
+                fcgiapp.Finish()
             except:
                 log_traceback()
     except:
