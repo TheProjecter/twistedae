@@ -585,9 +585,9 @@ class DatastoreMongoStub(apiproxy_stub.APIProxyStub):
     model_key = allocate_ids_request.model_key()
     size = allocate_ids_request.size()
 
-    start = self.intid
+    start = self.intid + 1
     self.increment_intid(size)
-    end   = self.intid
+    end = self.intid
 
     allocate_ids_response.set_start(start)
     allocate_ids_response.set_end(end)

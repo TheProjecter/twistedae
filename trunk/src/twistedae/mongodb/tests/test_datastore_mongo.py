@@ -80,6 +80,6 @@ class DatastoreMongoTestCase(unittest.TestCase):
         assert query.count() == 2000
 
         start, end = google.appengine.ext.db.allocate_ids(test_key, 2000)
-        assert start == 2001 and end == 4001
+        assert start == 2002 and end == 4001
 
         assert self.stub.intid == 4001
