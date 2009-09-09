@@ -79,9 +79,10 @@ def get_notes():
             return notes
 
     query = google.appengine.ext.db.GqlQuery(
-        "SELECT * FROM Note ORDER BY date DESC LIMIT 100")
+        "SELECT * FROM Note ORDER BY date DESC LIMIT 500")
 
-    notes = ['%s - %s' % (note.date, note.body) for note in query]
+    notes = ['(%s) %s - %s' %
+             (note.key().id(), note.date, note.body) for note in query]
 
     if memcache_enabled:
         if not google.appengine.api.memcache.add("notes", notes, 10):
