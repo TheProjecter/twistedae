@@ -77,8 +77,10 @@ def main():
             os.environ.clear()
             os.environ.update(env)
             os.environ['APPLICATION_ID'] = conf.application
+            os.environ['AUTH_DOMAIN'] = 'localhost'
             os.environ['SERVER_SOFTWARE'] = 'TwistedAE/0.1.0'
             os.environ['TZ'] = 'UTC'
+            os.environ['USER_EMAIL'] = 'admin@localhost'
 
             # Evaluate script path and set PATH_TRANSLATED environment
             # variable
