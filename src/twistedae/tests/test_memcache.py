@@ -96,6 +96,7 @@ class MemcacheTestCase(unittest.TestCase):
     def testGetKey(self):
         """Tries to obtain a key."""
 
+        os.environ['APPLICATION_ID'] = ''
         assert twistedae.memcache_stub.getKey('bar') == 'YmFy'
         assert twistedae.memcache_stub.getKey('b', namespace='a') == 'YS5i'
         os.environ['APPLICATION_ID'] = 'app'
