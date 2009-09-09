@@ -20,7 +20,6 @@ import google.appengine.api.apiproxy_stub
 import google.appengine.api.apiproxy_stub_map
 import google.appengine.ext.db
 import os
-import sys
 import time
 import twistedae.mongodb.datastore_mongo_stub
 import unittest
