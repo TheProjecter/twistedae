@@ -52,6 +52,8 @@ class DatastoreMongoTestCase(unittest.TestCase):
             'datastore_v3')
 
         # Make shure that we run the tests with a clean test db
+        self.stub._reset_intid()
+
         query = google.appengine.ext.db.GqlQuery(
             "SELECT * FROM TestModel LIMIT 2000")
 
@@ -71,8 +73,6 @@ class DatastoreMongoTestCase(unittest.TestCase):
     def testAllocatingIDs(self):
         """Allocates a number of IDs."""
 
-        self.stub._reset_intid()
-
         for i in xrange(0, 2000):
             test_key = TestModel().put()
 
@@ -81,3 +81,5 @@ class DatastoreMongoTestCase(unittest.TestCase):
 
         start, end = google.appengine.ext.db.allocate_ids(test_key, 2000)
         assert start == 2001 and end == 4001
+
+        assert self.stub.intid == 4001
