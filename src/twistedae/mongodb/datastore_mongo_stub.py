@@ -93,6 +93,30 @@ class DatastoreMongoStub(apiproxy_stub.APIProxyStub):
     self.__next_cursor = 1
     self.__queries = {}
 
+  @property
+  def intid(self):
+    """ Returns the global intid counter value.
+    """
+    return self.__db.__intid.find_one().get(u'i')
+
+  def increase_intid(self, delta=1):
+    """ Returns increased intid.
+    """
+    _intid = self.__db.__intid
+    result = _intid.find_one()
+    if result is None:
+      obj_id = _intid.save({u'i': 0})
+      result = _intid.find_one({u'_id': obj_id})
+    value = result.get(u'i') + delta
+    _intid.update(result, {"$set": {u'i': value}})
+    return value
+
+  def _reset_intid(self):
+    """ Resets intid.
+    """
+    result = self.__db.__intid.find_one()
+    self.__db.__intid.update(result, {"$set": {u'i': 1}})
+
   def MakeSyncCall(self, service, call, request, response):
     """ The main RPC entry point. service must be 'datastore_v3'. So far, the
     supported calls are 'Get', 'Put', 'RunQuery', 'Next', and 'Count'.
@@ -256,8 +280,7 @@ class DatastoreMongoStub(apiproxy_stub.APIProxyStub):
 
       last_path = clone.key().path().element_list()[-1]
       if last_path.id() == 0 and not last_path.has_name():
-        # HACK just using a random id...
-        last_path.set_id(random.randint(-sys.maxint-1, sys.maxint))
+        last_path.set_id(self.increase_intid())
 
         assert clone.entity_group().element_size() == 0
         group = clone.mutable_entity_group()
@@ -548,6 +571,17 @@ class DatastoreMongoStub(apiproxy_stub.APIProxyStub):
       spec.append((translate_name(prop.name()), translate_direction(prop.direction())))
 
     return (collection, spec)
+
+  def _Dynamic_AllocateIds(self, allocate_ids_request, allocate_ids_response):
+    model_key = allocate_ids_request.model_key()
+    size = allocate_ids_request.size()
+
+    start = self.intid
+    self.increase_intid(size)
+    end   = self.intid
+
+    allocate_ids_response.set_start(start)
+    allocate_ids_response.set_end(end)
 
   def __has_index(self, index):
     (collection, spec) = self.__collection_and_spec_for_index(index)
