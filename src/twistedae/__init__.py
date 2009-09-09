@@ -22,6 +22,7 @@ import google.appengine.api.apiproxy_stub_map
 import google.appengine.api.appinfo
 import google.appengine.api.mail_stub
 import google.appengine.api.urlfetch_stub
+import google.appengine.api.user_service_stub
 import google.appengine.api.xmpp.xmpp_service_stub
 import google.appengine.ext.webapp
 import imp
@@ -60,14 +61,15 @@ def initURLMapping(conf):
         script = handler.script
         regexp = handler.url
         if script != None:
-            base, unused_ext = os.path.splitext(os.path.basename(script))
+            module_path, unused_ext = os.path.splitext(script)
+            module = module_path.replace(os.sep, '.')
             if not regexp.startswith('^'):
                 regexp = '^' + regexp
             if not regexp.endswith('$'):
                 regexp += '$'
             compiled = re.compile(regexp)
             path = os.path.join(os.getcwd(), script)
-            url_mapping.append((compiled, base, path))
+            url_mapping.append((compiled, module, path))
  
     return url_mapping
 
@@ -212,11 +214,19 @@ def setupTaskQueue(root_path='.'):
         taskqueue.taskqueue_stub.TaskQueueServiceStub(root_path=root_path))
 
 
-def setupURLFetchStub():
+def setupURLFetchService():
     """Sets up urlfetch."""
 
     google.appengine.api.apiproxy_stub_map.apiproxy.RegisterStub('urlfetch',
         google.appengine.api.urlfetch_stub.URLFetchServiceStub())
+
+
+def setupUserService():
+    """Sets up user service."""
+
+    google.appengine.api.apiproxy_stub_map.apiproxy.RegisterStub('user',
+        google.appengine.api.user_service_stub.UserServiceStub(
+            login_url='/?=%s', logout_url='/?=%s'))
 
 
 def setupXMPP():
@@ -245,6 +255,8 @@ def setupStubs(conf):
 
     setupTaskQueue()
 
-    setupURLFetchStub()
+    setupURLFetchService()
+
+    setupUserService()
 
     setupXMPP()
