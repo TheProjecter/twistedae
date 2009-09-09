@@ -58,7 +58,8 @@ class DatastoreMongoStub(apiproxy_stub.APIProxyStub):
                datastore_file,
                history_file,
                require_indexes=False,
-               service_name='datastore_v3'):
+               service_name='datastore_v3',
+               auto_increment_ids=True):
     """Constructor.
 
     Initializes the datastore stub.
@@ -70,6 +71,7 @@ class DatastoreMongoStub(apiproxy_stub.APIProxyStub):
       require_indexes: bool, default False.  If True, composite indexes must
           exist in index.yaml for queries that need them.
       service_name: Service name expected for all calls.
+      auto_increment_ids: Use incrementing integer IDs for new entities.
     """
     super(DatastoreMongoStub, self).__init__(service_name)
 
@@ -77,6 +79,7 @@ class DatastoreMongoStub(apiproxy_stub.APIProxyStub):
     assert isinstance(app_id, basestring) and app_id != ''
     self.__app_id = app_id
     self.__require_indexes = require_indexes
+    self.__auto_increment_ids = auto_increment_ids
 
     # TODO should be a way to configure the connection
     self.__db = Connection()[app_id]
@@ -99,8 +102,8 @@ class DatastoreMongoStub(apiproxy_stub.APIProxyStub):
     """
     return self.__db.__intid.find_one().get(u'i')
 
-  def increase_intid(self, delta=1):
-    """ Returns increased intid.
+  def increment_intid(self, delta=1):
+    """ Returns incremented intid.
     """
     _intid = self.__db.__intid
     result = _intid.find_one()
@@ -283,7 +286,10 @@ class DatastoreMongoStub(apiproxy_stub.APIProxyStub):
 
       last_path = clone.key().path().element_list()[-1]
       if last_path.id() == 0 and not last_path.has_name():
-        last_path.set_id(self.increase_intid())
+        if self.__auto_increment_ids:
+          last_path.set_id(self.increment_intid())
+        else:
+          last_path.set_id(random.randint(-sys.maxint-1, sys.maxint))
 
         assert clone.entity_group().element_size() == 0
         group = clone.mutable_entity_group()
@@ -580,7 +586,7 @@ class DatastoreMongoStub(apiproxy_stub.APIProxyStub):
     size = allocate_ids_request.size()
 
     start = self.intid
-    self.increase_intid(size)
+    self.increment_intid(size)
     end   = self.intid
 
     allocate_ids_response.set_start(start)
