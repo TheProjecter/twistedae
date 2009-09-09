@@ -115,7 +115,10 @@ class DatastoreMongoStub(apiproxy_stub.APIProxyStub):
     """ Resets intid.
     """
     result = self.__db.__intid.find_one()
-    self.__db.__intid.update(result, {"$set": {u'i': 1}})
+    if result is None:
+        self.__db.__intid.save({u'i': 1})
+    else:
+        self.__db.__intid.update(result, {"$set": {u'i': 1}})
 
   def MakeSyncCall(self, service, call, request, response):
     """ The main RPC entry point. service must be 'datastore_v3'. So far, the
