@@ -55,14 +55,23 @@ def getAppConfig(directory='.'):
 def initURLMapping(conf):
     """Returns a list with mappings URL to module name and script."""
 
+    login = google.appengine.api.appinfo.URLMap()
+    login.url = '/login'
+    login.script = '$PYTHON_LIB/twistedae/handlers/login.py'
+    login.login = 'required'
+
     url_mapping = []
 
-    for handler in conf.handlers:
+    for handler in [login] + conf.handlers:
         script = handler.script
         regexp = handler.url
         if script != None:
-            module_path, unused_ext = os.path.splitext(script)
-            module = module_path.replace(os.sep, '.')
+            if script.startswith('$PYTHON_LIB'):
+                module = script.replace('/', '.')[12:][0:len(script)-15]
+            else:
+                module_path, unused_ext = os.path.splitext(script)
+                module = module_path.replace(os.sep, '.')
+
             if not regexp.startswith('^'):
                 regexp = '^' + regexp
             if not regexp.endswith('$'):
@@ -226,7 +235,7 @@ def setupUserService():
 
     google.appengine.api.apiproxy_stub_map.apiproxy.RegisterStub('user',
         google.appengine.api.user_service_stub.UserServiceStub(
-            login_url='/?=%s', logout_url='/?=%s'))
+            login_url='/login?=%s', logout_url='/logout?=%s'))
 
 
 def setupXMPP():
