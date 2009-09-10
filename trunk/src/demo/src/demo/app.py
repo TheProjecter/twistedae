@@ -19,6 +19,7 @@ import datetime
 import google.appengine.api.capabilities
 import google.appengine.api.labs.taskqueue
 import google.appengine.api.memcache
+import google.appengine.api.users
 import google.appengine.ext.db
 import google.appengine.ext.webapp
 import google.appengine.ext.webapp.template
@@ -91,11 +92,31 @@ def get_notes():
     return notes
 
 
+def get_login_or_logout(user):
+    """Returns either login or logout button."""
+
+    form = ('<form action="%(action)s" method="GET">'
+            '<input type="submit" value="%(label)s">'
+            '</form>')
+
+    if user:
+        vars = dict(action=google.appengine.api.users.create_logout_url('/'),
+                    label='Logout')
+    else:
+        vars = dict(action=google.appengine.api.users.create_login_url('/'),
+                    label='Login')
+
+    return form % vars 
+
+
 class DemoRequestHandler(google.appengine.ext.webapp.RequestHandler):
     """Simple request handler."""
 
     def get(self):
         """Handles get."""
+
+        user = google.appengine.api.users.get_current_user()
+        login_or_logout = get_login_or_logout(user)
 
         increment()
         count = get_count()
@@ -105,7 +126,12 @@ class DemoRequestHandler(google.appengine.ext.webapp.RequestHandler):
         google.appengine.api.labs.taskqueue.add(url='/makenote',
                                                 eta=eta,
                                                 payload="%i delayed" % count)
-        vars = dict(count=count, env=os.environ, notes=notes)
+        vars = dict(
+            count=count,
+            env=os.environ,
+            login_or_logout=login_or_logout,
+            notes=notes,
+            user=user)
         output = google.appengine.ext.webapp.template.render('index.html', vars)
         self.response.out.write(output)
 
