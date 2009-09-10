@@ -29,6 +29,8 @@ import twistedae.handlers
 
 
 def log_traceback():
+    """Writes traceback to log file."""
+
     s = StringIO.StringIO()
     traceback.print_exc(file=s)
     logging.error(s.getvalue())
@@ -69,6 +71,9 @@ def main():
         while True:
             (inp, out, err, env) = fcgiapp.Accept()
 
+            orig_stdin = sys.stdin
+            orig_stdout = sys.stdout
+            orig_stderr = sys.stderr
             sys.stdin = inp
             sys.stdout = out
             sys.stderr = err
@@ -105,18 +110,20 @@ def main():
                     name,
                     init_globals=restricted_names,
                     run_name='__main__')
+            except:
+                log_traceback()
             finally:
                 del sys.modules
                 sys.modules = dict(modules)
 
-            # Restore original environment
-            os.environ.clear()
-            os.environ.update(orig_env)
+                # Restore original environment
+                sys.stdin = orig_stdin
+                sys.stdout = orig_stdout
+                sys.stderr = orig_stderr
+                os.environ.clear()
+                os.environ.update(orig_env)
 
-            try:
                 fcgiapp.Finish()
-            except:
-                log_traceback()
     except:
         log_traceback()
 
