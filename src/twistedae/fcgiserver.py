@@ -25,6 +25,7 @@ import sys
 import time
 import traceback
 import twistedae
+import twistedae.handlers
 
 
 def log_traceback():
@@ -80,7 +81,7 @@ def main():
             os.environ['AUTH_DOMAIN'] = 'localhost'
             os.environ['SERVER_SOFTWARE'] = 'TwistedAE/0.1.0'
             os.environ['TZ'] = 'UTC'
-            os.environ['USER_EMAIL'] = 'admin@localhost'
+            os.environ['USER_EMAIL'] = ''
 
             # Evaluate script path and set PATH_TRANSLATED environment
             # variable
