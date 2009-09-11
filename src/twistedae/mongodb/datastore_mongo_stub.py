@@ -53,6 +53,8 @@ class DatastoreMongoStub(apiproxy_stub.APIProxyStub):
   A DatastoreMongoStub instance handles a single app's data.
   """
 
+  _NO_TRANSACTION_WARNING_LOGGED = False
+
   def __init__(self,
                app_id,
                datastore_file,
@@ -548,13 +550,19 @@ class DatastoreMongoStub(apiproxy_stub.APIProxyStub):
 
   def _Dynamic_BeginTransaction(self, request, transaction):
     transaction.set_handle(0)
-    logging.log(logging.WARN, 'transactions unsupported')
+    if not self._NO_TRANSACTION_WARNING_LOGGED:
+      logging.log(logging.WARN, 'transactions unsupported')
+      self._NO_TRANSACTION_WARNING_LOGGED = True
 
   def _Dynamic_Commit(self, transaction, transaction_response):
-    logging.log(logging.WARN, 'transactions unsupported')
+    if not self._NO_TRANSACTION_WARNING_LOGGED:
+      logging.log(logging.WARN, 'transactions unsupported')
+      self._NO_TRANSACTION_WARNING_LOGGED = True
 
   def _Dynamic_Rollback(self, transaction, transaction_response):
-    logging.log(logging.WARN, 'transactions unsupported')
+    if not self._NO_TRANSACTION_WARNING_LOGGED:
+      logging.log(logging.WARN, 'transactions unsupported')
+      self._NO_TRANSACTION_WARNING_LOGGED = True
 
   def _Dynamic_GetSchema(self, app_str, schema):
     # TODO this is used for the admin viewer to introspect.
