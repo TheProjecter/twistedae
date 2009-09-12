@@ -37,6 +37,12 @@ class SimpleCounterShard(google.appengine.ext.db.Model):
     count = google.appengine.ext.db.IntegerProperty(required=True, default=0)   
 
 
+class LogEntry(google.appengine.ext.db.Model):
+    """Log entry model."""
+
+    ip = google.appengine.ext.db.StringProperty()   
+
+
 class Note(google.appengine.ext.db.Model):
     """Very simple note model."""
 
@@ -136,6 +142,30 @@ class DemoRequestHandler(google.appengine.ext.webapp.RequestHandler):
         self.response.out.write(output)
 
 
+class CountRequestHandler(google.appengine.ext.webapp.RequestHandler):
+    """Request handler for counting log entries."""
+
+    def get(self):
+        """Returns just the current counter value."""
+
+        query = LogEntry.all()
+        count = query.count()
+        self.response.headers.add_header("Content-Type", "text/plain")
+        self.response.out.write('Count: %i' % count)
+
+
+class LogRequestHandler(google.appengine.ext.webapp.RequestHandler):
+    """Request handler for making a log entry."""
+
+    def get(self):
+        """Makes a log entry."""
+
+        entry = LogEntry(ip='0')
+        entry.put()
+        self.response.headers.add_header("Content-Type", "text/plain")
+        self.response.out.write('ok')
+
+
 class NoteWorker(google.appengine.ext.webapp.RequestHandler):
     """Stores notes."""
 
@@ -149,6 +179,8 @@ class NoteWorker(google.appengine.ext.webapp.RequestHandler):
  
 app = google.appengine.ext.webapp.WSGIApplication([
     ('/', DemoRequestHandler),
+    ('/count', CountRequestHandler),
+    ('/log', LogRequestHandler),
     ('/makenote', NoteWorker),
 ], debug=True)
 

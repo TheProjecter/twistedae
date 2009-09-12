@@ -11,6 +11,12 @@ handlers:
 - url: /makenote
   script: app.py
 
+- url: /count
+  script: app.py
+
+- url: /log
+  script: app.py
+
 - url: /dummy
   script: dummy.py
   login: required
