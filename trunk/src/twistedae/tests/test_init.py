@@ -44,5 +44,5 @@ class InitTestCase(unittest.TestCase):
 
         url_mapping = twistedae.initURLMapping(self.conf)
         for pattern, module, path in url_mapping:
-            pattern.match('/foo')
-            assert module == 'app'
+            if pattern.match('/foo'):
+                self.assertEqual(module, 'app')
