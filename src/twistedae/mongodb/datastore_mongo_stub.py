@@ -22,11 +22,12 @@ Transactions are unsupported.
 """
 
 import logging
+import re
+import random
+import socket
 import sys
 import threading
 import types
-import re
-import random
 
 from google.appengine.api import apiproxy_stub
 from google.appengine.api import datastore
@@ -46,6 +47,44 @@ datastore_pb.Query.__hash__ = lambda self: hash(self.Encode())
 _MAXIMUM_RESULTS = 1000
 _MAX_QUERY_OFFSET = 1000
 _MAX_QUERY_COMPONENTS = 100
+
+
+class IntidClient(object):
+  """Clinet for an integer ID server."""
+
+  def __init__(self, host='localhost', port=9009):
+    self.s = None
+    for res in socket.getaddrinfo(host, port, socket.AF_UNSPEC, socket.SOCK_STREAM):
+      af, socktype, proto, canonname, sa = res
+      try:
+        self.s = socket.socket(af, socktype, proto)
+      except socket.error, msg:
+        self.s = None
+        continue
+      try:
+        self.s.connect(sa)
+      except socket.error, msg:
+        self.s.close()
+        self.s = None
+        continue
+      break
+
+    if self.s is None:
+      logging.error('no connection to intid server')
+
+    self.s.send('con')
+    r = self.s.recv(3)
+    if r == 'ack':
+      logging.info('connected to intid server')
+
+  def get(self):
+    self.s.send('int')
+    data = self.s.recv(64)
+    return int(data)
+
+  def close(self):
+    self.s.close()
+
 
 class DatastoreMongoStub(apiproxy_stub.APIProxyStub):
   """Persistent stub for the Python datastore API, using MongoDB to persist.
@@ -86,6 +125,11 @@ class DatastoreMongoStub(apiproxy_stub.APIProxyStub):
     # TODO should be a way to configure the connection
     self.__db = Connection()[app_id]
 
+    if auto_increment_ids:
+        self.__intid = IntidClient()
+    else:
+        self.__intid = None
+
     # NOTE our query history gets reset each time the server restarts...
     # should this be fixed?
     self.__query_history = {}
@@ -97,33 +141,6 @@ class DatastoreMongoStub(apiproxy_stub.APIProxyStub):
     self.__cursor_lock = threading.Lock()
     self.__next_cursor = 1
     self.__queries = {}
-
-  @property
-  def intid(self):
-    """ Returns the global intid counter value.
-    """
-    return self.__db.__intid.find_one().get(u'i')
-
-  def increment_intid(self, delta=1):
-    """ Returns incremented intid.
-    """
-    _intid = self.__db.__intid
-    result = _intid.find_one()
-    if result is None:
-      obj_id = _intid.save({u'i': 0})
-      result = _intid.find_one({u'_id': obj_id})
-    value = result.get(u'i') + delta
-    _intid.update(result, {"$set": {u'i': value}})
-    return value
-
-  def _reset_intid(self):
-    """ Resets intid.
-    """
-    result = self.__db.__intid.find_one()
-    if result is None:
-        self.__db.__intid.save({u'i': 1})
-    else:
-        self.__db.__intid.update(result, {"$set": {u'i': 1}})
 
   def MakeSyncCall(self, service, call, request, response):
     """ The main RPC entry point. service must be 'datastore_v3'. So far, the
@@ -289,7 +306,7 @@ class DatastoreMongoStub(apiproxy_stub.APIProxyStub):
       last_path = clone.key().path().element_list()[-1]
       if last_path.id() == 0 and not last_path.has_name():
         if self.__auto_increment_ids:
-          last_path.set_id(self.increment_intid())
+          last_path.set_id(self.__intid.get())
         else:
           last_path.set_id(random.randint(-sys.maxint-1, sys.maxint))
 
