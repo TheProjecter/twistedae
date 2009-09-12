@@ -53,8 +53,9 @@ class Worker(threading.Thread):
         while 1:
             data = self.socket.recv(3)
             if data == 'int':
-                with lock:
-                    self.socket.send(str(increment()))
+                lock.acquire()
+                self.socket.send(str(increment()))
+                lock.release()
             elif data == 'con':
                 self.socket.send('ack')
             else:
