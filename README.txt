@@ -85,6 +85,14 @@ It can be used as expected::
 Testing
 -------
 
-Run unit tests by typing (running supervisord required)::
+Stop all appserver processes before running the test suite. The tests expect
+following services up and running::
+
+  * memcached
+  * mongod
+  * intid
+  * rabbitmq
+
+Run unit tests by typing::
 
   $ bin/nosetests
