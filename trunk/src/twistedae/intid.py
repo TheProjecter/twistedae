@@ -17,7 +17,6 @@
 
 import logging
 import pymongo.connection
-import signal
 import socket
 import threading
 
