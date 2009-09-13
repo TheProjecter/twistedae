@@ -15,8 +15,40 @@
 # limitations under the License.
 """Login and logout handler."""
 
+import Cookie
 import google.appengine.ext.webapp
+import md5
+import re
 import wsgiref.handlers
+
+
+def getUserInfo(cookie):
+    """Get the user info from the HTTP cookie in the CGI environment."""
+
+    c = Cookie.SimpleCookie(cookie)
+
+    value = ''
+    if 'twistedae_login' in c:
+      value = c['twistedae_login'].value
+
+    email, admin, user_id = (value.split(':') + ['', '', ''])[:3]
+
+    return email, (admin == 'True'), user_id
+
+
+def createLoginCookie(email, admin):
+    """Creates cookie payload data for login information."""
+
+    admin_string = 'False'
+    if admin:
+        admin_string = 'True'
+    if email:
+        user_id_digest = md5.new(email.lower()).digest()
+        user_id = '1' + ''.join(['%02d' % ord(x) for x in user_id_digest])[:20]
+    else:
+        user_id = ''
+
+    return '%s:%s:%s' % (email, admin_string, user_id)
 
 
 class LoginRequestHandler(google.appengine.ext.webapp.RequestHandler):
@@ -25,11 +57,32 @@ class LoginRequestHandler(google.appengine.ext.webapp.RequestHandler):
     def get(self):
         """Handles get."""
 
-        self.response.out.write("<html><body>Login</body></html>")
+        c = Cookie.SimpleCookie()
+        c['twistedae_login'] = createLoginCookie('admin@localhost', admin=True)
+        c['twistedae_login']['path'] = '/'
+        h = re.compile('^Set-Cookie: ').sub('', c.output(), count=1)
+        self.response.headers.add_header('Set-Cookie', str(h))
+        self.redirect('/')
+
+
+class LogoutRequestHandler(google.appengine.ext.webapp.RequestHandler):
+    """Simple logout handler."""
+
+    def get(self):
+        """Handles get."""
+
+        c = Cookie.SimpleCookie()
+        c['twistedae_login'] = ''
+        c['twistedae_login']['path'] = '/'
+        c['twistedae_login']['max-age'] = '0'
+        h = re.compile('^Set-Cookie: ').sub('', c.output(), count=1)
+        self.response.headers.add_header('Set-Cookie', str(h))
+        self.redirect('/')
 
 
 app = google.appengine.ext.webapp.WSGIApplication([
     ('/login', LoginRequestHandler),
+    ('/logout', LogoutRequestHandler),
 ], debug=True)
 
 
