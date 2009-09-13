@@ -13,26 +13,40 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Login and logout handler."""
+"""Login/logout handler."""
 
 import Cookie
 import google.appengine.ext.webapp
 import md5
+import os
 import re
 import wsgiref.handlers
 
 
-COOKIE_NAME = 'dev_appserver_login' # That's just for now
+def getCookieName():
+    """Returns the cookie name.
+
+    To get the appcfg upload_data command work we have to provide the correct
+    cookie name for easy authentication.
+
+    TODO: This is a huge security hole and should be fixed for the productive
+          environment.
+    """
+
+    if os.environ.get('HTTP_X_APPCFG_API_VERSION') == '1':
+        return 'dev_appserver_login'
+    else:
+        return 'twistedae_login'
 
 
 def getUserInfo(cookie):
     """Get the user info from the HTTP cookie in the CGI environment."""
 
     c = Cookie.SimpleCookie(cookie)
-
+    cookie_name = getCookieName()
     value = ''
-    if COOKIE_NAME in c:
-      value = c[COOKIE_NAME].value
+    if cookie_name in c:
+      value = c[cookie_name].value
 
     email, admin, user_id = (value.split(':') + ['', '', ''])[:3]
 
@@ -58,11 +72,12 @@ class LoginRequestHandler(google.appengine.ext.webapp.RequestHandler):
     """Simple login handler."""
 
     def get(self):
-        """Handles get."""
+        """Sets the authentication cookie."""
 
+        cookie_name = getCookieName()
         c = Cookie.SimpleCookie()
-        c[COOKIE_NAME] = createLoginCookie('admin@localhost', admin=True)
-        c[COOKIE_NAME]['path'] = '/'
+        c[cookie_name] = createLoginCookie('admin@localhost', admin=True)
+        c[cookie_name]['path'] = '/'
         h = re.compile('^Set-Cookie: ').sub('', c.output(), count=1)
         self.response.headers.add_header('Set-Cookie', str(h))
         self.redirect('/')
@@ -72,12 +87,13 @@ class LogoutRequestHandler(google.appengine.ext.webapp.RequestHandler):
     """Simple logout handler."""
 
     def get(self):
-        """Handles get."""
+        """Removes the authentication cookie."""
 
+        cookie_name = getCookieName()
         c = Cookie.SimpleCookie()
-        c[COOKIE_NAME] = ''
-        c[COOKIE_NAME]['path'] = '/'
-        c[COOKIE_NAME]['max-age'] = '0'
+        c[cookie_name] = ''
+        c[cookie_name]['path'] = '/'
+        c[cookie_name]['max-age'] = '0'
         h = re.compile('^Set-Cookie: ').sub('', c.output(), count=1)
         self.response.headers.add_header('Set-Cookie', str(h))
         self.redirect('/')
@@ -90,8 +106,6 @@ app = google.appengine.ext.webapp.WSGIApplication([
 
 
 def main():
-    """The main function."""
-
     wsgiref.handlers.CGIHandler().run(app)
 
 
