@@ -49,6 +49,7 @@ directory = ${buildout:directory}
 priority = 20
 redirect_stderr = true
 stdout_logfile = ${buildout:directory}/var/log/intid.log
+stopsignal = INT
 
 [program:taskworker]
 command = ${buildout:directory}/bin/taskworker 
