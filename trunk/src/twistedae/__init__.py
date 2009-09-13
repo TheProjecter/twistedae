@@ -60,9 +60,13 @@ def initURLMapping(conf):
     login.script = '$PYTHON_LIB/twistedae/handlers/login.py'
     login.login = 'required'
 
+    logout = google.appengine.api.appinfo.URLMap()
+    logout.url = '/logout'
+    logout.script = '$PYTHON_LIB/twistedae/handlers/login.py'
+
     url_mapping = []
 
-    for handler in [login] + conf.handlers:
+    for handler in [login, logout] + conf.handlers:
         script = handler.script
         regexp = handler.url
         if script != None:
