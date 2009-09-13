@@ -50,7 +50,7 @@ _MAX_QUERY_COMPONENTS = 100
 
 
 class IntidClient(object):
-  """Clinet for an integer ID server."""
+  """Client for an integer ID server."""
 
   def __init__(self, host='localhost', port=9009):
     self.s = None
@@ -125,10 +125,11 @@ class DatastoreMongoStub(apiproxy_stub.APIProxyStub):
     # TODO should be a way to configure the connection
     self.__db = Connection()[app_id]
 
+    # Setup the intid client
     if auto_increment_ids:
-        self.__intid = IntidClient()
+        self.intid = IntidClient()
     else:
-        self.__intid = None
+        self.intid = None
 
     # NOTE our query history gets reset each time the server restarts...
     # should this be fixed?
@@ -306,7 +307,7 @@ class DatastoreMongoStub(apiproxy_stub.APIProxyStub):
       last_path = clone.key().path().element_list()[-1]
       if last_path.id() == 0 and not last_path.has_name():
         if self.__auto_increment_ids:
-          last_path.set_id(self.__intid.get())
+          last_path.set_id(self.intid.get())
         else:
           last_path.set_id(random.randint(-sys.maxint-1, sys.maxint))
 
@@ -610,9 +611,10 @@ class DatastoreMongoStub(apiproxy_stub.APIProxyStub):
     model_key = allocate_ids_request.model_key()
     size = allocate_ids_request.size()
 
-    start = self.intid + 1
-    self.increment_intid(size)
-    end = self.intid
+    start = self.intid.get()
+    for i in xrange(size-1):
+        self.intid.get()
+    end = self.intid.get()
 
     allocate_ids_response.set_start(start)
     allocate_ids_response.set_end(end)
