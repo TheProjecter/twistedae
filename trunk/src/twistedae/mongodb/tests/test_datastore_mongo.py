@@ -31,6 +31,20 @@ class TestModel(google.appengine.ext.db.Model):
     contents = google.appengine.ext.db.StringProperty()
 
 
+class TestIntidClient(object):
+    """Pretends to be an intid server client."""
+
+    def __init__(self, host=None, port=None):
+        self.value = 0
+
+    def get(self):
+        self.value += 1
+        return self.value
+
+    def close(self):
+        pass
+
+
 class DatastoreMongoTestCase(unittest.TestCase):
     """Testing the twistedae datastore mongo."""
 
@@ -51,8 +65,8 @@ class DatastoreMongoTestCase(unittest.TestCase):
         self.stub = google.appengine.api.apiproxy_stub_map.apiproxy.GetStub(
             'datastore_v3')
 
-        # Make shure that we run the tests with a clean test db
-        self.stub._reset_intid()
+        self.stub.intid.close()
+        self.stub.intid = TestIntidClient()
 
         query = google.appengine.ext.db.GqlQuery(
             "SELECT * FROM TestModel LIMIT 2000")
@@ -80,6 +94,5 @@ class DatastoreMongoTestCase(unittest.TestCase):
         assert query.count() == 2000
 
         start, end = google.appengine.ext.db.allocate_ids(test_key, 2000)
-        assert start == 2002 and end == 4001
-
-        assert self.stub.intid == 4001
+        self.assertEqual(start, 2001)
+        self.assertEqual(end, 4001)

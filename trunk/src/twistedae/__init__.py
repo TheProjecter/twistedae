@@ -24,7 +24,6 @@ import google.appengine.api.mail_stub
 import google.appengine.api.urlfetch_stub
 import google.appengine.api.user_service_stub
 import google.appengine.api.xmpp.xmpp_service_stub
-import google.appengine.ext.remote_api
 import google.appengine.ext.webapp
 import imp
 import logging
@@ -73,9 +72,9 @@ def initURLMapping(conf):
         regexp = handler.url
         if script != None:
             if script.startswith('$PYTHON_LIB'):
-                module = script.replace('/', '.')[12:][0:len(script)-15]
-                path = os.path.join(
-                    os.environ['GOOGLE_APPENGINE_SDK'], script[12:])
+                module = script.replace(os.sep, '.')[12:][0:len(script)-15]
+                p = os.path.dirname(__import__(module).__file__).split(os.sep)
+                path = os.path.join(os.sep.join(p[:len(p)-1]), script[12:])
             else:
                 module_path, unused_ext = os.path.splitext(script)
                 module = module_path.replace(os.sep, '.')
