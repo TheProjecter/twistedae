@@ -22,14 +22,17 @@ import re
 import wsgiref.handlers
 
 
+COOKIE_NAME = 'dev_appserver_login' # That's just for now
+
+
 def getUserInfo(cookie):
     """Get the user info from the HTTP cookie in the CGI environment."""
 
     c = Cookie.SimpleCookie(cookie)
 
     value = ''
-    if 'twistedae_login' in c:
-      value = c['twistedae_login'].value
+    if COOKIE_NAME in c:
+      value = c[COOKIE_NAME].value
 
     email, admin, user_id = (value.split(':') + ['', '', ''])[:3]
 
@@ -58,8 +61,8 @@ class LoginRequestHandler(google.appengine.ext.webapp.RequestHandler):
         """Handles get."""
 
         c = Cookie.SimpleCookie()
-        c['twistedae_login'] = createLoginCookie('admin@localhost', admin=True)
-        c['twistedae_login']['path'] = '/'
+        c[COOKIE_NAME] = createLoginCookie('admin@localhost', admin=True)
+        c[COOKIE_NAME]['path'] = '/'
         h = re.compile('^Set-Cookie: ').sub('', c.output(), count=1)
         self.response.headers.add_header('Set-Cookie', str(h))
         self.redirect('/')
@@ -72,9 +75,9 @@ class LogoutRequestHandler(google.appengine.ext.webapp.RequestHandler):
         """Handles get."""
 
         c = Cookie.SimpleCookie()
-        c['twistedae_login'] = ''
-        c['twistedae_login']['path'] = '/'
-        c['twistedae_login']['max-age'] = '0'
+        c[COOKIE_NAME] = ''
+        c[COOKIE_NAME]['path'] = '/'
+        c[COOKIE_NAME]['max-age'] = '0'
         h = re.compile('^Set-Cookie: ').sub('', c.output(), count=1)
         self.response.headers.add_header('Set-Cookie', str(h))
         self.redirect('/')

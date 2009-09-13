@@ -58,6 +58,18 @@ You can access the application using a web browser with the following URL::
   http://localhost:8080/
 
 
+Loading some data into the demo application
+-------------------------------------------
+
+The appcfg tool (original script from the SDK) can upload and download data to
+and from your application's datastore.
+
+An already prepared configuration is placed in the demo application source
+directory and can be tested by typing::
+
+  $ bin/appcfg upload_data --config_file=src/demo/note_loader.py --filename=src/demo/notes.csv --kind=Note --url=http://localhost:8080/remote_api parts/demo/
+
+
 Google's development application server
 ---------------------------------------
 
