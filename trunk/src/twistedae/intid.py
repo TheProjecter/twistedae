@@ -16,7 +16,8 @@
 """Simple intid server implementation."""
 
 import logging
-import pymongo.connection
+import os
+import shelve
 import socket
 import threading
 
@@ -25,35 +26,24 @@ logging.basicConfig(
     level=logging.INFO)
 
 lock = threading.Lock()
-db = pymongo.connection.Connection()['intid']
-
-
-def increment(delta=1):
-    """Returns incremented intid."""
-
-    intid = db.intid
-    result = intid.find_one()
-    if result is None:
-        obj_id = intid.save({u'i': 0})
-        result = intid.find_one({u'_id': obj_id})
-    value = result.get(u'i') + delta
-    intid.update(result, {"$set": {u'i': value}})
-    return value
 
 
 class Worker(threading.Thread):
     """The worker thread."""
 
-    def __init__(self, sock):
+    def __init__(self, sock, db):
         super(Worker, self).__init__()
         self.socket = sock
+        self.db = db
 
     def run(self):
         while 1:
             data = self.socket.recv(3)
             if data == 'int':
                 lock.acquire()
-                self.socket.send(str(increment()))
+                self.db['int'] += 1
+                self.socket.send(str(self.db['int']))
+                self.db.sync()
                 lock.release()
             elif data == 'con':
                 self.socket.send('ack')
@@ -69,6 +59,12 @@ def main():
     server_socket.bind(("127.0.0.1", 9009))
     server_socket.listen(10)
 
+    db = shelve.open(
+        os.path.join(os.environ['TMPDIR'], 'intid'), writeback=True)
+
+    if not 'int' in db:
+        db['int'] = 0
+
     logging.info("server starting")
 
     client_num = 0
@@ -78,7 +74,9 @@ def main():
             socketfd, address = server_socket.accept()
             client_num += 1
             logging.info("client %i %s connected" % (client_num, address))
-            t = Worker(socketfd)
+            t = Worker(socketfd, db)
             t.run()
-    finally:
-        server_socket.close() 
+    except KeyboardInterrupt:
+        db.close()
+        server_socket.close()
+        logging.info("server stopping")
