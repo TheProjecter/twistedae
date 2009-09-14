@@ -50,7 +50,7 @@ def main():
 
     app_root = os.environ['APP_ROOT']
     os.chdir(app_root)
-    sys.path.append(app_root)
+    sys.path.insert(0, app_root)
 
     conf = twistedae.getAppConfig()
 
