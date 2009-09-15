@@ -16,7 +16,6 @@
 """The taskqueue package."""
 
 import datetime
-import logging
 import os
 import time
 
