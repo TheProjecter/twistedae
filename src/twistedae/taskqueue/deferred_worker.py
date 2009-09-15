@@ -19,6 +19,8 @@ from amqplib import client_0_8 as amqp
 import logging
 import os
 import simplejson
+import socket
+import sys
 import threading
 import time
 import twistedae.taskqueue
@@ -34,12 +36,16 @@ def main(
                '%(message)s',
         level=logging.DEBUG)
 
-    conn = amqp.Connection(
-        host="localhost:5672",
-        userid="guest",
-        password="guest",
-        virtual_host="/",
-        insist=False)
+    try:
+        conn = amqp.Connection(
+            host="localhost:5672",
+            userid="guest",
+            password="guest",
+            virtual_host="/",
+            insist=False)
+    except socket.error, err_obj:
+        logging.error("queue server not reachable (reason: %s)" % err_obj)
+        sys.exit(1)
 
     chan = conn.channel()
 
