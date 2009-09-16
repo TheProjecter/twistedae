@@ -44,7 +44,8 @@ def handle_task(msg):
     try:
         res = urllib2.urlopen(req)
     except urllib2.URLError, err_obj:
-        logging.error("failed task %s %s" % (task, err_obj.reason))
+        reason = getattr(err_obj, 'reason', err_obj)
+        logging.error("failed task %s %s" % (task, reason))
         return False
 
     return True
