@@ -24,6 +24,8 @@ import sys
 import twistedae.taskqueue
 import urllib2
 
+MAX_TRY_COUNT = 10
+
 
 def handle_task(msg):
     """Decodes received message and processes task."""
@@ -42,7 +44,7 @@ def handle_task(msg):
     try:
         res = urllib2.urlopen(req)
     except urllib2.URLError, err_obj:
-        logging.error("failed task %s (reason: %s)" % (task, err_obj))
+        logging.error("failed task %s %s" % (task, err_obj.reason))
         return False
 
     return True
@@ -80,16 +82,17 @@ def main(queue="tasks", exchange="immediate", routing_key="normal_worker"):
             task = simplejson.loads(msg.body)
             task_dict = dict(task)
 
-            task_dict["try_count"] = task["try_count"] + 1
-            task_dict["eta"] = twistedae.taskqueue.get_new_eta_usec(
-                task_dict["try_count"])
+            if task_dict["try_count"] < MAX_TRY_COUNT:
+                task_dict["try_count"] = task["try_count"] + 1
+                task_dict["eta"] = twistedae.taskqueue.get_new_eta_usec(
+                    task_dict["try_count"])
 
-            new_msg = amqp.Message(simplejson.dumps(task_dict))
-            new_msg.properties["delivery_mode"] = 2
-            new_msg.properties["task_name"] = task['name']
+                new_msg = amqp.Message(simplejson.dumps(task_dict))
+                new_msg.properties["delivery_mode"] = 2
+                new_msg.properties["task_name"] = task['name']
 
-            chan.basic_publish(
-                new_msg, exchange="deferred", routing_key="deferred_worker")
+                chan.basic_publish(
+                    new_msg, exchange="deferred", routing_key="deferred_worker")
 
         chan.basic_ack(msg.delivery_tag)
 

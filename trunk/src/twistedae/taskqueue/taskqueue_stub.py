@@ -81,7 +81,7 @@ class TaskQueueServiceStub(google.appengine.api.apiproxy_stub.APIProxyStub):
             eta=request.eta_usec()/1000000,
             payload=request.body(),
             queue=request.queue_name(),
-            try_count=0
+            try_count=1
         )
 
         msg = amqp.Message(simplejson.dumps(task_dict))
