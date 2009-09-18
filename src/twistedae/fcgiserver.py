@@ -28,12 +28,13 @@ import twistedae
 import twistedae.handlers.login
 
 
-def log_traceback():
-    """Writes traceback to log file."""
+def get_traceback():
+    """Writes traceback to log file and returns it for printing."""
 
     s = StringIO.StringIO()
     traceback.print_exc(file=s)
     logging.error(s.getvalue())
+    return s.getvalue()
 
 
 def main():
@@ -118,10 +119,11 @@ def main():
                     init_globals=restricted_names,
                     run_name='__main__')
             except:
-                log_traceback()
+                print 'Content-Type: text/plain\n'
+                print get_traceback()
             finally:
-                del sys.modules
-                sys.modules = dict(modules)
+                sys.modules.clear()
+                sys.modules.update(modules)
 
                 # Restore original environment
                 sys.stdin = orig_stdin
@@ -132,7 +134,7 @@ def main():
 
                 fcgiapp.Finish()
     except:
-        log_traceback()
+        get_traceback()
 
 
 if __name__ == "__main__":
