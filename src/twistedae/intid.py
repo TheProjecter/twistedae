@@ -31,10 +31,11 @@ lock = threading.Lock()
 class Worker(threading.Thread):
     """The worker thread."""
 
-    def __init__(self, sock, db):
+    def __init__(self, sock, db, num):
         super(Worker, self).__init__()
         self.socket = sock
         self.db = db
+        self.num = num
 
     def run(self):
         while 1:
@@ -49,6 +50,7 @@ class Worker(threading.Thread):
                 self.socket.send('ack')
             else:
                 self.socket.close()
+                logging.info("client %i disconnected" % self.num)
                 break
 
 
@@ -74,8 +76,8 @@ def main():
             socketfd, address = server_socket.accept()
             client_num += 1
             logging.info("client %i %s connected" % (client_num, address))
-            t = Worker(socketfd, db)
-            t.run()
+            t = Worker(socketfd, db, client_num)
+            t.start()
     except KeyboardInterrupt:
         db.close()
         server_socket.close()
