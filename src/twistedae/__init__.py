@@ -276,3 +276,16 @@ def setupStubs(conf):
     setupUserService()
 
     setupXMPP()
+
+    try:
+        from google.appengine.api.images import images_stub
+        google.appengine.api.apiproxy_stub_map.apiproxy.RegisterStub(
+            'images',
+            images_stub.ImagesServiceStub())
+    except ImportError, e:
+        logging.warning('Could not initialize images API; you are likely '
+                        'missing the Python "PIL" module. ImportError: %s', e)
+        from google.appengine.api.images import images_not_implemented_stub
+        google.appengine.api.apiproxy_stub_map.apiproxy.RegisterStub(
+            'images',
+            images_not_implemented_stub.ImagesNotImplementedServiceStub())
