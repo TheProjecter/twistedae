@@ -59,15 +59,6 @@ def main():
 
     twistedae.setupStubs(conf)
 
-    if os.environ.get('RESTRICTED_PYTHON', 'false').lower() == 'true':
-        [twistedae.RestrictedImportHook.add(m) for m in
-         twistedae.RESTRICTED_MODULES]
-        restricted_names = twistedae.RESTRICTED_NAMES
-        sys.meta_path = [twistedae.RestrictedImportHook(),
-                         twistedae.DisallowExtensionsImportHook()]
-    else:
-        restricted_names = dict()
-
     MODULE_CACHE = dict()
 
     try:
@@ -105,12 +96,6 @@ def main():
                     os.environ['PATH_TRANSLATED'] = script
                     break
 
-            modules = dict(sys.modules)
-
-            for m in twistedae.RESTRICTED_MODULES:
-                if m in sys.modules:
-                    del sys.modules[m]
-
             if hasattr(sys, 'path_importer_cache'):
                 sys.path_importer_cache.clear()
 
@@ -122,7 +107,6 @@ def main():
                     # Load and run the application module
                     mod = runpy.run_module(
                         name,
-                        init_globals=restricted_names,
                         run_name='__main__')
                     # Store module in the cache
                     MODULE_CACHE[name] = mod
@@ -135,9 +119,6 @@ def main():
                     # pipe or if we have some kind of leak.
                     pass
             finally:
-                sys.modules.clear()
-                sys.modules.update(modules)
-
                 # Restore original environment
                 sys.stdin = orig_stdin
                 sys.stdout = orig_stdout
