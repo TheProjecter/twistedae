@@ -56,8 +56,21 @@ def is_deferred_eta(eta):
     return False
 
 
-def get_new_eta_usec(try_count):
-    """Returns a new estimated execution time depending on try count."""
+def get_new_eta_usec(try_count, backoff_seconds=[5.0]):
+    """Returns new estimated execution time depending on try count.
 
-    eta = datetime.datetime.utcnow() + datetime.timedelta(seconds=10)
+    Args:
+        try_count: current number of retries.
+        backoff_seconds: list of float values to configure the backoff behavior.
+    """
+
+    assert len(backoff_seconds) >= 1
+
+    try:
+        sec = backoff_seconds[try_count-1]
+    except IndexError:
+        sec = backoff_seconds[-1]
+
+    eta = datetime.datetime.utcnow() + datetime.timedelta(seconds=sec)
+
     return int(time.mktime(eta.replace(tzinfo=UTC).timetuple()))
