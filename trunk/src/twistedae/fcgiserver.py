@@ -119,8 +119,11 @@ def main():
                     init_globals=restricted_names,
                     run_name='__main__')
             except:
-                print 'Content-Type: text/plain\n'
-                print get_traceback()
+                try:
+                    print 'Content-Type: text/plain\n'
+                    print get_traceback()
+                except IOError:
+                    pass
             finally:
                 sys.modules.clear()
                 sys.modules.update(modules)
