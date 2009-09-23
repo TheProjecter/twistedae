@@ -15,9 +15,7 @@
 # limitations under the License.
 """Helper functions for registering App Engine API proxy stubs."""
 
-import StringIO
 import capability_stub
-import errno
 import google.appengine.api.apiproxy_stub_map
 import google.appengine.api.appinfo
 import google.appengine.api.mail_stub
@@ -25,15 +23,11 @@ import google.appengine.api.urlfetch_stub
 import google.appengine.api.user_service_stub
 import google.appengine.api.xmpp.xmpp_service_stub
 import google.appengine.ext.webapp
-import imp
 import logging
 import memcache_stub
 import mongodb.datastore_mongo_stub
 import os
-import pickle
 import re
-import runpy
-import sys
 import taskqueue.taskqueue_stub
 
 
@@ -88,98 +82,6 @@ def initURLMapping(conf):
             url_mapping.append((compiled, module, path))
  
     return url_mapping
-
-
-class NotImplementedClass(object):
-    """Provided by classes not implemented in the restricted environment."""
-
-    @staticmethod
-    def _raise(*args, **kw):
-        raise NotImplementedError('This class/method is not available.')
-
-    __init__ = _raise
-
-
-def RestrictedOpen(filename, flags, mode=0777):
-  """Restricted implementation of os.open."""
-
-  raise OSError(errno.EPERM, "Operation not permitted", filename)
-
-
-class RestrictedFile(file):
-    """Restricted file class which provides read-only access."""
-
-    _ALLOWED_MODES = frozenset(['r', 'rb', 'U', 'rU'])
-
-    def __init__(self, filename, mode='r', bufsize=-1, **kw):
-        if mode not in RestrictedFile._ALLOWED_MODES:
-            raise IOError('invalid mode: %s' % mode)
-
-        super(RestrictedFile, self).__init__(filename, mode, bufsize, **kw)
-
-
-# See http://code.google.com/appengine/docs/python/runtime.html#Pure_Python for
-# more information on restrictions in the GAE Python runtime environment.
-
-RESTRICTED_NAMES = {
-    'open': RestrictedOpen,
-}
-
-RESTRICTED_MODULES = {
-    '__builtin__': {'buffer': NotImplementedClass,
-                    'file': RestrictedFile,
-                    'open': RestrictedOpen
-                    },
-    'cPickle': pickle.__dict__,
-    'ftplib': None,
-    'imp': None,
-    'select': None,
-    'socket': None,
-    'tempfile': {'TemporaryFile': StringIO.StringIO},
-    'marshal': None,
-    'os': {'environ': os.environ,
-           'path': os.path
-           },
-    }
-
-
-class RestrictedImportHook(object):
-    """Import hook to replace registered modules with restricted variants."""
-    
-    _restricted = set()
-
-    @classmethod
-    def add(cls, fullname):
-        cls._restricted.add(fullname)
-
-    def find_module(self, fullname, path=None):
-        if path: return
-        if fullname in self._restricted:
-            return self
-
-    def load_module(self, fullname):
-        new_module = imp.new_module(fullname)
-        new_module.__dict__.update(RESTRICTED_MODULES[fullname] or dict())
-        return new_module
-
-
-class DisallowExtensionsImportHook(object):
-    """Simple import hook to disallow import of C extensions."""
-
-    def find_module(self, fullname, path=None):
-        if path:
-            parts = fullname.split('.')
-            submodule = parts.pop()
-            try:
-                result = imp.find_module(submodule, path)
-            except ImportError:
-                pass
-            else:
-                source_file, pathname, description = result
-                suffix, mode, file_type = description
-                if file_type == imp.C_EXTENSION:
-                    raise ImportError
-        return
 
 
 def setupCapability():
