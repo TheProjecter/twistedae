@@ -68,6 +68,8 @@ def main():
     else:
         restricted_names = dict()
 
+    MODULE_CACHE = dict()
+
     try:
         while True:
             (inp, out, err, env) = fcgiapp.Accept()
@@ -113,16 +115,24 @@ def main():
                 sys.path_importer_cache.clear()
 
             try:
-                # Load and run the application module
-                mod = runpy.run_module(
-                    name,
-                    init_globals=restricted_names,
-                    run_name='__main__')
+                # Lookup module cache
+                if name in MODULE_CACHE:
+                    MODULE_CACHE[name]['main']()
+                else:
+                    # Load and run the application module
+                    mod = runpy.run_module(
+                        name,
+                        init_globals=restricted_names,
+                        run_name='__main__')
+                    # Store module in the cache
+                    MODULE_CACHE[name] = mod
             except:
                 try:
                     print 'Content-Type: text/plain\n'
                     print get_traceback()
                 except IOError:
+                    # TODO: Check whether it occurs due to a broken FastCGI
+                    # pipe or if we have some kind of leak.
                     pass
             finally:
                 sys.modules.clear()
