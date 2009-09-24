@@ -22,9 +22,29 @@ import simplejson
 import socket
 import sys
 import threading
-import time
 import twistedae.taskqueue
 import urllib2
+
+
+class RecoverLoop(threading.Thread):
+    """Provides a recover loop/timer."""
+
+    def __init__(self, interval, callback, args=[], kwargs={}):
+        """Initializes recover loop."""
+
+        threading.Thread.__init__(self)
+        self.interval = interval
+        self.callback = callback
+        self.args = args
+        self.kwargs = kwargs
+        self.finished = threading.Event()
+        self.event = threading.Event()
+
+    def run(self):
+        while not self.finished.isSet():
+            self.event.wait(self.interval)
+            if not self.finished.isSet() and not self.event.isSet():
+                self.callback(*self.args, **self.kwargs)
 
 
 def main(
@@ -81,14 +101,8 @@ def main(
         callback=recv_callback,
         consumer_tag=_consumer_tag)
 
-    def recover_loop():
-        while True:
-            chan.basic_recover(False)
-            time.sleep(5)
-
-    timer = threading.Thread(target=recover_loop)
-    timer.setDaemon(True)
-    timer.start()
+    loop = RecoverLoop(5, chan.basic_recover, [False])
+    loop.start()
 
     try:
         while True:
