@@ -22,6 +22,7 @@ import google.appengine.api.labs.taskqueue.taskqueue_stub
 import google.appengine.api.urlfetch
 import google.appengine.runtime.apiproxy_errors
 import logging
+import os
 import simplejson
 import socket
 import twistedae.taskqueue
@@ -75,13 +76,15 @@ class TaskQueueServiceStub(google.appengine.api.apiproxy_stub.APIProxyStub):
             return
 
         task_dict = dict(
-            name=request.task_name(),
-            url=request.url(),
-            method=request.method(),
             eta=request.eta_usec()/1000000,
+            host=os.environ['SERVER_NAME'],
+            method=request.method(),
+            name=request.task_name(),
             payload=request.body(),
+            port=os.environ['SERVER_PORT'],
             queue=request.queue_name(),
-            try_count=1
+            try_count=1,
+            url=request.url(),
         )
 
         msg = amqp.Message(simplejson.dumps(task_dict))

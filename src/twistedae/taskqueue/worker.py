@@ -36,7 +36,7 @@ def handle_task(msg):
         return False
 
     req = urllib2.Request(
-        url='http://127.0.0.1:8080%s' % task['url'],
+        url='http://%(host)s:%(port)s%(url)s' % task,
         data=task['payload'],
         headers={'Content-Type': 'text/plain'}
     )
