@@ -18,6 +18,7 @@
 import StringIO
 import fcgiapp
 import logging
+import optparse
 import os
 import re
 import runpy
@@ -27,108 +28,133 @@ import traceback
 import twistedae
 import twistedae.handlers.login
 
+DESCRIPTION = ("FastCGI application server.")
+USAGE = "usage: %prog [options] <application root>"
+
 
 def get_traceback():
-    """Writes traceback to log file and returns it for printing."""
+    """Returns traceback."""
 
-    s = StringIO.StringIO()
-    traceback.print_exc(file=s)
-    logging.error(s.getvalue())
-    return s.getvalue()
+    output = StringIO.StringIO()
+    traceback.print_exc(file=output)
+    value = output.getvalue()
+    output.close()
+
+    return value
+
+
+def serve(conf):
+    """Implements the server loop.
+
+    Args:
+        conf: The application configuration.
+    """
+
+    # Inititalize URL mapping
+    url_mapping = twistedae.initURLMapping(conf)
+
+    module_cache = dict()
+
+    while True:
+        (inp, out, err, env) = fcgiapp.Accept()
+
+        # Redirect standard input, output and error streams
+        sys.stdin = inp
+        sys.stdout = out
+        sys.stderr = err
+
+        # Initialize application environment
+        os_env = dict(os.environ)
+        os.environ.clear()
+        os.environ.update(env)
+        os.environ['APPLICATION_ID'] = conf.application
+        os.environ['AUTH_DOMAIN'] = 'localhost'
+        os.environ['SERVER_SOFTWARE'] = 'TwistedAE/0.1.0'
+        os.environ['TZ'] = 'UTC'
+
+        # Get user info and set the user environment variables
+        email, admin, user_id = twistedae.handlers.login.getUserInfo(
+            os.environ.get('HTTP_COOKIE', None))
+        os.environ['USER_EMAIL'] = email
+        if admin:
+            os.environ['USER_IS_ADMIN'] = '1'
+        os.environ['USER_ID'] = user_id
+
+        # Compute script path and set PATH_TRANSLATED environment variable
+        for pattern, name, script in url_mapping:
+            if re.match(pattern, os.environ['PATH_INFO']) is not None:
+                os.environ['PATH_TRANSLATED'] = script
+                break
+
+        try:
+            # Lookup module in cache
+            if name in module_cache:
+                module_cache[name]['main']()
+            else:
+                # Load and run the application module
+                mod = runpy.run_module(name, run_name='__main__')
+                # Store module in the cache
+                module_cache[name] = mod
+        except:
+            try:
+                tb = get_traceback()
+                logging.error(tb)
+                print 'Content-Type: text/plain\n'
+                print tb
+            except IOError:
+                # TODO: Check whether it occurs due to a broken FastCGI
+                # pipe or if we have some kind of leak
+                pass
+        finally:
+            # Re-redirect standard input, output and error streams
+            sys.stdin = sys.__stdin__
+            sys.stdout = sys.__stdout__
+            sys.stderr = sys.__stderr__
+
+            # Restore original environment
+            os.environ.clear()
+            os.environ.update(os_env)
+
+            # Finish request
+            fcgiapp.Finish()
 
 
 def main():
     """Initializes the server."""
 
-    # Setting the time zone
-    os.environ['TZ'] = 'UTC'
-    time.tzset()
+    op = optparse.OptionParser(description=DESCRIPTION, usage=USAGE)
+
+    op.add_option("--log", dest="logfile", metavar="FILE",
+                  help="write logging output to this file",
+                  default=os.path.join(os.environ['TMPDIR'], 'fcgi.log'))
+
+    (options, args) = op.parse_args()
+
+    if sys.argv[-1].startswith('-') or sys.argv[-1] == sys.argv[0]:
+        op.print_usage()
+        sys.exit(2)
+
+    app_root = sys.argv[-1]
 
     logging.basicConfig(
         format='%(levelname)-8s %(asctime)s %(filename)s:%(lineno)s] '
                '%(message)s',
-        level=logging.INFO, filename='var/log/appserver.log')
+        level=logging.INFO, filename=options.logfile)
 
-    app_root = os.environ['APP_ROOT']
+    # Change the current working directory to the application root and load
+    # the application configuration
     os.chdir(app_root)
     sys.path.insert(0, app_root)
-
     conf = twistedae.getAppConfig()
 
-    url_mapping = twistedae.initURLMapping(conf)
-
+    # Inititalize API proxy stubs
     twistedae.setupStubs(conf)
 
-    MODULE_CACHE = dict()
-
+    # Serve the application
     try:
-        while True:
-            (inp, out, err, env) = fcgiapp.Accept()
-
-            orig_stdin = sys.stdin
-            orig_stdout = sys.stdout
-            orig_stderr = sys.stderr
-            sys.stdin = inp
-            sys.stdout = out
-            sys.stderr = err
-
-            # Initialize application environment
-            orig_env = dict(os.environ)
-            os.environ.clear()
-            os.environ.update(env)
-            os.environ['APPLICATION_ID'] = conf.application
-            os.environ['AUTH_DOMAIN'] = 'localhost'
-            os.environ['SERVER_SOFTWARE'] = 'TwistedAE/0.1.0'
-            os.environ['TZ'] = 'UTC'
-
-            # Get user info and set the user environment variables
-            email, admin, user_id = twistedae.handlers.login.getUserInfo(
-                os.environ.get('HTTP_COOKIE', None))
-            os.environ['USER_EMAIL'] = email
-            if admin:
-                os.environ['USER_IS_ADMIN'] = '1'
-            os.environ['USER_ID'] = user_id
-
-            # Evaluate script path and set PATH_TRANSLATED environment
-            # variable
-            for pattern, name, script in url_mapping:
-                if re.match(pattern, os.environ['PATH_INFO']) is not None:
-                    os.environ['PATH_TRANSLATED'] = script
-                    break
-
-            if hasattr(sys, 'path_importer_cache'):
-                sys.path_importer_cache.clear()
-
-            try:
-                # Lookup module cache
-                if name in MODULE_CACHE:
-                    MODULE_CACHE[name]['main']()
-                else:
-                    # Load and run the application module
-                    mod = runpy.run_module(
-                        name,
-                        run_name='__main__')
-                    # Store module in the cache
-                    MODULE_CACHE[name] = mod
-            except:
-                try:
-                    print 'Content-Type: text/plain\n'
-                    print get_traceback()
-                except IOError:
-                    # TODO: Check whether it occurs due to a broken FastCGI
-                    # pipe or if we have some kind of leak.
-                    pass
-            finally:
-                # Restore original environment
-                sys.stdin = orig_stdin
-                sys.stdout = orig_stdout
-                sys.stderr = orig_stderr
-                os.environ.clear()
-                os.environ.update(orig_env)
-
-                fcgiapp.Finish()
+        serve(conf)
     except:
-        get_traceback()
+        logging.error(get_traceback())
 
 
 if __name__ == "__main__":
