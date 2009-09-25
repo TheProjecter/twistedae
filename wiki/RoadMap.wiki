@@ -1,0 +1,33 @@
+#summary The Product Roadmap
+#labels Phase-Requirements
+
+= Product Roadmap =
+
+The following represents features that are actively under development. Most of these features here are intended to be launched with the forthcoming first Alpha release.
+
+(_Important note_: We consider renaming the twistedae project to avoid confusion with the great [http://twistedmatrix.com Twisted framework])
+
+== Features on Deck ==
+
+=== Services ===
+
+  * Datastore (mongoDB)
+  * Memcache (memcached)
+  * Task Queue (RabbitMQ)
+  * URL Fetch
+  * Mail
+  * XMPP
+  * Images
+  * Remote API
+
+=== Tools ===
+
+  * Support for uploading and downloading data to and from your application's datastore with appcfg.py
+  * The apptool console script to perform common tasks on configuring an application (NGINX config etc.)
+
+== Features planned for the first Beta release ==
+
+  * Transactions
+  * Authentication (Google Accounts, OpenID, ...)
+  * Queue configuration
+  * Improved appcfg support
