@@ -5,7 +5,7 @@
 
 The following represents features that are actively under development. Most of these features here are intended to be launched with the forthcoming first Alpha release.
 
-(_Important note_: We consider renaming the twistedae project to avoid confusion with the great [http://twistedmatrix.com Twisted framework])
+(_Important note_: We consider renaming the twistedae project to avoid confusion with the great [http://twistedmatrix.com Twisted framework].)
 
 == Features on Deck ==
 
