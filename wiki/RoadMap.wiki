@@ -27,9 +27,14 @@ The following represents features that are actively under development. Most of t
   * Support for `remote_api_shell.py`
   * The `bin/apptool` console script to perform common tasks on configuring an application (NGINX config etc.)
 
+=== Documentation ==
+
+  * Online developer documentation
+
 == Features planned for the first Beta release ==
 
   * Alternative datastore backend (BDBDatastore, Cassandra)
   * Authentication (Google Accounts, OpenID, ...)
   * Queue configuration
   * Improved `appcfg.py` support
+  * Admin console
