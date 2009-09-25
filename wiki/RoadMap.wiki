@@ -3,7 +3,7 @@
 
 = Product Roadmap =
 
-The following represents features that are actively under development. Most of these features here are intended to be launched with the forthcoming first Alpha release.
+The following represents features that are actively under development. Most of these features here are intended to be launched with the *forthcoming first Alpha release* (to be scheduled).
 
 (_Important note_: We consider renaming the twistedae project to avoid confusion with the great [http://twistedmatrix.com Twisted framework].)
 
