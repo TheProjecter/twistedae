@@ -30,6 +30,7 @@ The following represents features that are actively under development. Most of t
 === Documentation ==
 
   * Online developer documentation
+  * Sample-code and demo applications
 
 == Features planned for the first Beta release ==
 
