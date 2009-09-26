@@ -67,18 +67,8 @@ priority = 20
 redirect_stderr = true
 stdout_logfile = ${buildout:directory}/var/log/deferred_taskworker.log
 
-[fcgi-program:appserver]
-command = ${buildout:directory}/bin/appserver --log=${buildout:directory}/var/log/appserver.log ${buildout:directory}/parts/demo
-socket = tcp://localhost:8081
-process_name = %(program_name)s_%(process_num)02d
-numprocs = 2
-priority = 999
-redirect_stderr = true
-stdout_logfile = ${buildout:directory}/var/log/appserver.log
-stdout_logfile_maxbytes = 1MB
-stdout_logfile_backups = 10
-stderr_logfile = ${buildout:directory}/var/log/appserver-error.log
-stderr_logfile_maxbytes = 1MB
+[include]
+files = ${buildout:directory}/etc/appserver.conf
 
 [program:nginx]
 command = ${buildout:directory}/parts/nginx/sbin/nginx -c ${buildout:directory}/parts/nginxctl/nginxctl.conf
