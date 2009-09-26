@@ -79,7 +79,7 @@ location / {
 
 
 def write_nginx_conf(options, conf, app_root):
-    """Writes a nginx proxy configuration file."""
+    """Writes a nginx server configuration stub."""
 
     var = os.path.abspath(options.var)
     addr = options.addr
@@ -150,7 +150,7 @@ def main():
 
     op.add_option("-n", "--nginx", dest="nginx", metavar="FILE",
                   help="write nginx configuration to this file",
-                  default=os.path.join('etc', 'proxy.conf'))
+                  default=os.path.join('etc', 'server.conf'))
 
     op.add_option("--var", dest="var", metavar="PATH",
                   help="use this directory for platform independent data",
