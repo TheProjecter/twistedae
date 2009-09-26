@@ -77,9 +77,24 @@ location / {
 }
 """
 
+SUPERVISOR_APPSERVER_CONFIG = """
+[fcgi-program:appserver]
+command = %(bin)s/appserver --log=%(var)s/log/appserver.log %(app_root)s
+socket = tcp://%(addr)s:%(port)s
+process_name = %%(program_name)s_%%(process_num)02d
+numprocs = 2
+priority = 999
+redirect_stderr = true
+stdout_logfile = %(var)s/log/appserver.log
+stdout_logfile_maxbytes = 1MB
+stdout_logfile_backups = 10
+stderr_logfile = %(var)s/log/appserver-error.log
+stderr_logfile_maxbytes = 1MB
+"""
+
 
 def write_nginx_conf(options, conf, app_root):
-    """Writes a nginx server configuration stub."""
+    """Writes nginx server configuration stub."""
 
     var = os.path.abspath(options.var)
     addr = options.addr
@@ -135,6 +150,23 @@ def write_nginx_conf(options, conf, app_root):
     httpd_conf_stub.close()
 
 
+def write_supervisor_conf(options, conf, app_root):
+    """Writes supercisord configuration stub."""
+
+    bin = os.path.abspath(os.path.dirname(sys.argv[0]))
+    var = os.path.abspath(options.var)
+    addr = options.addr
+    port = options.port
+
+    supervisor_conf_stub = open(options.supervisor, 'w')
+    supervisor_conf_stub.write(
+        "# Automatically generated supervisor configuration file: don't edit!\n"
+        "# Use apptool to modify.\n")
+
+    supervisor_conf_stub.write(SUPERVISOR_APPSERVER_CONFIG % locals())
+    supervisor_conf_stub.close()
+
+
 def main():
     """Runs the apptool console script."""
 
@@ -151,6 +183,10 @@ def main():
     op.add_option("-n", "--nginx", dest="nginx", metavar="FILE",
                   help="write nginx configuration to this file",
                   default=os.path.join('etc', 'server.conf'))
+
+    op.add_option("-s", "--supervisor", dest="supervisor", metavar="FILE",
+                  help="write supervisor configuration to this file",
+                  default=os.path.join('etc', 'appserver.conf'))
 
     op.add_option("--var", dest="var", metavar="PATH",
                   help="use this directory for platform independent data",
@@ -170,3 +206,4 @@ def main():
     conf = twistedae.getAppConfig(app_root)
 
     write_nginx_conf(options, conf, app_root)
+    write_supervisor_conf(options, conf, app_root)
